@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(curl -s http://localhost:5173)",
+      "Bash(npm list *)",
+      "Bash(Start-Sleep -Seconds 3)",
+      "Bash(Get-Content \"C:\\\\Users\\\\Frander\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\D--Sistemas-SGI\\\\039557d7-e081-4c3d-a64a-fce9fe287fe9\\\\tasks\\\\bmwa79wrv.output\" -Tail 20)",
+      "mcp__Claude_in_Chrome__tabs_context_mcp"
+    ]
+  }
+}

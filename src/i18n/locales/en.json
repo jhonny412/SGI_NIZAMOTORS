@@ -1,0 +1,397 @@
+{
+  "common": {
+    "system_name": "Inventory Management System",
+    "admin": "Admin",
+    "active_operation": "Active operation",
+    "synced": "Inventory synchronized",
+    "status": "Status",
+    "close": "Close",
+    "back": "Back",
+    "close_menu": "Close menu",
+    "toggle_menu": "Toggle menu visibility",
+    "toggle_menu_width": "Toggle menu width",
+    "theme_light": "Light theme",
+    "theme_dark": "Dark theme",
+    "change_theme_light": "Change to light theme",
+    "change_theme_dark": "Change to dark theme",
+    "switch_lang": "Switch to {{lang}}",
+    "spanish": "Spanish",
+    "english": "English"
+  },
+  "menu": {
+    "dashboard": "Dashboard",
+    "productos": "Products",
+    "movimientos": "Movements",
+    "kardex": "Kardex",
+    "proveedores": "Suppliers",
+    "marcas": "Brands",
+    "categorias": "Categories",
+    "creditos": "Credits",
+    "ventas": "Sales",
+    "inicio": "Home",
+    "comercial": "Commercial",
+    "inventario": "Inventory",
+    "compras": "Purchases"
+  },
+  "pages": {
+    "dashboard": {
+      "title": "Executive Dashboard",
+      "subtitle": "Overview of stock, value, and recent activity.",
+      "updated": "Data updated",
+      "active_products": "Active products",
+      "active_products_detail": "Catalog references",
+      "inventory_cost": "Inventory cost",
+      "purchase_value": "Purchase value",
+      "sale_value": "Sale value",
+      "valuation_detail": "Valued inventory",
+      "estimated_margin": "Estimated margin",
+      "potential_gain": "S/. {{value}} potential",
+      "stock_alerts": "Stock alerts",
+      "stock_alerts_subtitle": "Products requiring operational attention.",
+      "out_of_stock": "Out of stock ({{count}})",
+      "low_stock": "Low stock ({{count}})",
+      "no_alerts": "No stock alerts",
+      "latest_movements": "Latest movements",
+      "movements_subtitle": "Recently recorded entries and exits.",
+      "view_all": "View all",
+      "product": "Product",
+      "type": "Type",
+      "quantity": "Qty.",
+      "date": "Date",
+      "entry": "Entry",
+      "exit": "Exit",
+      "no_movements": "No movements",
+      "review": "Review",
+      "units": "{{count}} units"
+    },
+    "productos": {
+      "title": "Product Management",
+      "found": "{{count}} products found",
+      "new": "New Product",
+      "search_placeholder": "Search by description, code, OEM...",
+      "all_suppliers": "All suppliers",
+      "all_stock": "All stock",
+      "out_of_stock_filter": "Out of stock",
+      "low_stock_filter": "Low stock (1-5)",
+      "normal_stock_filter": "Normal stock (>5)",
+      "table": {
+        "id": "ID",
+        "oem": "OEM",
+        "code": "Code",
+        "description": "Description",
+        "stock": "Stock",
+        "purchase_price": "P. Price",
+        "margin": "Margin",
+        "sale_price": "S. Price",
+        "utility": "Profit",
+        "supplier": "Supplier",
+        "actions": "Actions",
+        "out_of_stock": "Out of stock",
+        "low_stock": "Low stock",
+        "in_stock": "In stock"
+      },
+      "badges": {
+        "out_of_stock": "OUT OF STOCK",
+        "low_stock": "{{count}} (LOW)"
+      },
+      "actions": {
+        "view": "View details",
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "no_products": "No products found",
+      "pagination": {
+        "showing": "Showing <bold>{{count}}</bold> of <bold>{{total}}</bold> products",
+        "previous": "Previous",
+        "next": "Next"
+      }
+    },
+    "categorias": {
+      "pagination": {
+        "showing": "Showing <bold>{{count}}</bold> of <bold>{{total}}</bold> categories"
+      }
+    },
+    "proveedores": {
+      "title": "Suppliers",
+      "registered": "{{count}} suppliers registered",
+      "new": "New Supplier",
+      "search_placeholder": "Search supplier...",
+      "table": {
+        "id": "ID",
+        "name": "Name",
+        "phone": "Phone",
+        "email": "Email",
+        "products": "Products",
+        "actions": "Actions"
+      },
+      "no_suppliers": "No suppliers found",
+      "pagination": {
+        "showing": "Showing <bold>{{count}}</bold> of <bold>{{total}}</bold> suppliers"
+      }
+    },
+    "marcas": {
+      "title": "Brands",
+      "registered": "{{count}} brands registered",
+      "new": "New Brand",
+      "search_placeholder": "Search brand...",
+      "table": {
+        "id": "ID",
+        "name": "Name",
+        "actions": "Actions"
+      },
+      "no_brands": "No brands found",
+      "pagination": {
+        "showing": "Showing <bold>{{count}}</bold> of <bold>{{total}}</bold> brands"
+      }
+    },
+    "movimientos": {
+      "title": "Inventory Movements",
+      "registered": "{{count}} movements recorded",
+      "new": "Record Movement",
+      "search_placeholder": "Search by product...",
+      "all_types": "All types",
+      "entries": "Entries",
+      "exits": "Exits",
+      "table": {
+        "id": "ID",
+        "product": "Product",
+        "type": "Type",
+        "quantity": "Quantity",
+        "stock_ant": "Prev. Stock",
+        "stock_new": "New Stock",
+        "reason": "Reason",
+        "date": "Date"
+      },
+      "no_movements": "No recorded movements",
+      "product_deleted": "Deleted product",
+      "pagination": {
+        "showing": "Showing <bold>{{count}}</bold> of <bold>{{total}}</bold> records"
+      }
+    },
+    "kardex": {
+      "title": "Kardex",
+      "subtitle": "Inventory movement history",
+      "filters": {
+        "product": "Product",
+        "all_products": "All products",
+        "type": "Type",
+        "all": "All",
+        "date_from": "Date From",
+        "date_to": "Date To"
+      },
+      "info": {
+        "stock": "Stock: ",
+        "supplier": "Supplier: "
+      },
+      "no_movements": "No movements for the selected filters",
+      "total": "Total: {{count}} movements",
+      "pagination": {
+        "showing": "Showing <bold>{{count}}</bold> of <bold>{{total}}</bold> records"
+      }
+    },
+    "creditos": {
+      "title": "Credits & Transfers Control",
+      "subtitle": "Management of parts loaned to neighboring stores.",
+      "registered": "{{count}} transfers registered",
+      "new": "New Loan / Transfer",
+      "filter_all": "All",
+      "filter_pending": "Pending",
+      "filter_resolved": "Resolved",
+      "status_pending": "Pending",
+      "status_returned": "Returned",
+      "status_paid": "Paid (Cash)",
+      "table": {
+        "id": "ID",
+        "date": "Date",
+        "product": "Product",
+        "store": "Neighboring Store",
+        "qty": "Qty.",
+        "total": "Total (S/.)",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "no_transfers": "No loans or transfers found.",
+      "actions": {
+        "mark_returned": "Mark as Returned",
+        "mark_paid": "Mark as Paid",
+        "view_notes": "View notes"
+      }
+    },
+    "ventas": {
+      "title": "Sales Management",
+      "registered": "{{count}} sales registered",
+      "new": "Record Sale",
+      "search_placeholder": "Search by product, customer or notes...",
+      "stats": {
+        "total_sales": "Sales Made",
+        "total_sales_desc": "Registered transactions",
+        "total_revenue": "Total Revenue",
+        "total_revenue_desc": "Total sales value",
+        "avg_ticket": "Average Ticket",
+        "avg_ticket_desc": "Average sale value",
+        "total_profit": "Estimated Profit",
+        "total_profit_desc": "Estimated profit margin"
+      },
+      "table": {
+        "id": "ID",
+        "date": "Date",
+        "product": "Product",
+        "qty": "Qty.",
+        "price": "S. Price",
+        "total": "Total Sale",
+        "profit": "Profit",
+        "notes": "Customer / Notes",
+        "payment": "Payment Method",
+        "items": "Items / Qty.",
+        "actions": "Actions"
+      },
+      "no_sales": "No registered sales found.",
+      "pagination": {
+        "showing": "Showing <bold>{{count}}</bold> of <bold>{{total}}</bold> sales"
+      }
+    }
+  },
+  "forms": {
+    "product": {
+      "edit_title": "Edit Product",
+      "new_title": "New Product",
+      "edit_subtitle": "Modify product data",
+      "new_subtitle": "Complete data to register a new product",
+      "oem": "OEM",
+      "oem_placeholder": "Manufacturer OEM code",
+      "code": "Code",
+      "code_placeholder": "Ex: CPU-001",
+      "description": "Description",
+      "description_placeholder": "Product name or description",
+      "stock": "Stock",
+      "supplier": "Supplier",
+      "supplier_placeholder": "Select supplier...",
+      "purchase_price": "Purchase Price (S/.)",
+      "margin": "Profit Margin (%)",
+      "sale_price": "Sale Price",
+      "profit": "Profit",
+      "cancel": "Cancel",
+      "save": "Save Changes",
+      "add": "Add Product",
+      "required_fields": "Required fields",
+      "required_message": "Description, Code, and Supplier are mandatory"
+    },
+    "movement": {
+      "title": "Record Movement",
+      "subtitle": "Record a stock entry or exit",
+      "product": "Product",
+      "product_placeholder": "Select product...",
+      "type": "Movement Type",
+      "entry": "Entry (Stock increase)",
+      "exit": "Exit (Stock decrease)",
+      "quantity": "Quantity",
+      "reason": "Reason",
+      "reason_placeholder": "Ex: Purchase, Sale, Adjustment...",
+      "register": "Register",
+      "required_message": "Product, Type, and Quantity are mandatory",
+      "insufficient_stock": "Insufficient stock",
+      "insufficient_message": "There is not enough stock to perform this exit",
+      "insufficient_message_detail": "Current stock: {{stock}}. Cannot withdraw {{qty}}."
+    },
+    "supplier": {
+      "edit_title": "Edit Supplier",
+      "new_title": "New Supplier",
+      "name": "Name",
+      "name_placeholder": "Company or supplier name",
+      "phone": "Phone",
+      "phone_placeholder": "Ex: 555-1234",
+      "email": "Email",
+      "email_placeholder": "email@company.com",
+      "cancel": "Cancel",
+      "save": "Save",
+      "add": "Add",
+      "required_message": "Supplier name is mandatory"
+    },
+    "brand": {
+      "edit_title": "Edit Brand",
+      "new_title": "New Brand",
+      "name": "Name",
+      "name_placeholder": "Brand name (e.g., Toyota, Hyundai)",
+      "cancel": "Cancel",
+      "save": "Save",
+      "add": "Add",
+      "required_message": "Brand name is mandatory"
+    },
+    "transfer": {
+      "title": "New Loan to Store",
+      "subtitle": "Record the transfer of a part as a loan",
+      "store": "Neighboring Store",
+      "store_placeholder": "Select store...",
+      "product": "Spare Part",
+      "product_placeholder": "Select spare part...",
+      "qty": "Quantity to loan",
+      "notes": "Notes / Observations",
+      "notes_placeholder": "Additional details about the loan...",
+      "save": "Record Loan",
+      "cancel": "Cancel",
+      "required_message": "All fields are mandatory"
+    }
+  },
+  "sale": {
+    "title": "Emit Sales Receipt (Boleta)",
+    "subtitle": "Generate a stock exit with receipt and customer data",
+    "product": "Select Spare Part",
+    "product_placeholder": "Type to search a spare part...",
+    "qty": "Qty. to sell",
+    "price": "Unit Price (S/.)",
+    "client": "Customer Details",
+    "client_placeholder": "Customer Name or Company",
+    "total": "Receipt Total",
+    "register": "Generate Receipt",
+    "required_message": "Product and quantity are mandatory",
+    "stock_alert": "Stock: {{stock}} avail.",
+    "search_placeholder": "Search by description, code or OEM...",
+    "doc_type": "Document Type",
+    "doc_num": "Document Number",
+    "client_address": "Customer Address",
+    "payment_method": "Payment Method",
+    "subtotal": "Tax Base",
+    "igv": "VAT/IGV (18%)",
+    "add_item": "Add to Cart",
+    "no_items": "No spare parts added to this sale",
+    "remove": "Remove",
+    "invalid_dni": "DNI must be 8 digits long",
+    "invalid_ruc": "RUC must be 11 digits long",
+    "empty_cart": "You must add at least one product to the sale",
+    "cash": "Cash",
+    "card": "Credit/Debit Card",
+    "transfer": "Bank Transfer",
+    "yape_plin": "Yape / Plin",
+    "detail_title": "Sale Detail",
+    "detail_subtitle": "Full summary of the receipt and products",
+    "print": "Print",
+    "client_info": "Customer Information",
+    "sale_info": "Sale Information",
+    "legacy_sale": "Legacy Sale",
+    "items_list": "Detailed Items"
+  },
+  "alerts": {
+    "product_added": "Product added",
+    "product_added_text": "The product was registered successfully",
+    "product_updated": "Product updated",
+    "product_updated_text": "Changes were saved successfully",
+    "delete_product_title": "Delete product?",
+    "delete_warning_text": "This action cannot be undone",
+    "confirm_delete": "Yes, delete",
+    "deleted": "Deleted",
+    "product_deleted_text": "The product was deleted",
+    "supplier_added": "Supplier added",
+    "supplier_updated": "Supplier updated",
+    "cannot_delete": "Cannot delete",
+    "supplier_in_use": "There are products associated with this supplier",
+    "delete_supplier_title": "Delete supplier?",
+    "product_not_found": "Product not found",
+    "entry_recorded": "Entry recorded",
+    "exit_recorded": "Exit recorded",
+    "new_stock_text": "New stock for \"{{desc}}\": {{stock}}",
+    "brand_added": "Brand added",
+    "brand_updated": "Brand updated",
+    "brand_in_use": "There are products associated with this brand",
+    "delete_brand_title": "Delete brand?"
+  }
+}
