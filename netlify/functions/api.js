@@ -86,7 +86,9 @@ export async function handler(event, context) {
       const formattedRows = rows.map(row => {
         const formatted = { ...row };
         for (const [key, val] of Object.entries(formatted)) {
-          if (val !== null && typeof val === "object") {
+          if (val instanceof Date) {
+            formatted[key] = val.toISOString();
+          } else if (val !== null && typeof val === "object") {
             formatted[key] = JSON.stringify(val);
           }
         }
@@ -223,7 +225,9 @@ export async function handler(event, context) {
       // Asegurar formateo de JSON a String si es necesario
       if (resultData && typeof resultData === "object") {
         for (const [key, val] of Object.entries(resultData)) {
-          if (val !== null && typeof val === "object") {
+          if (val instanceof Date) {
+            resultData[key] = val.toISOString();
+          } else if (val !== null && typeof val === "object") {
             resultData[key] = JSON.stringify(val);
           }
         }
