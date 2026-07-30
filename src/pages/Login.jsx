@@ -1,9 +1,49 @@
 import { useState, useEffect, useRef } from "react";
 import { useInventory } from "../context/useInventory";
+import { useAuth } from "../context/useAuth";
 import Swal from "sweetalert2";
 
+function UserAvatar({ avatarType, rol, name, className }) {
+  const isSuper = rol?.toLowerCase() === "superadmin";
+  const isAdmin = rol?.toLowerCase() === "admin" || rol?.toLowerCase() === "superadmin";
+  
+  if (avatarType === "admin" || isAdmin) {
+    return (
+      <div className={`rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-slate-950 flex items-center justify-center shadow-lg ${className}`}>
+        {isSuper ? (
+          <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+          </svg>
+        ) : (
+          <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+          </svg>
+        )}
+      </div>
+    );
+  }
+  
+  if (avatarType === "vendedor" || rol?.toLowerCase() === "vendedor") {
+    return (
+      <div className={`rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-500 text-slate-100 flex items-center justify-center shadow-lg ${className}`}>
+        <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95a15.65 15.65 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.92 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14c-.16-.64-.26-1.31-.26-2s.1-1.36.26-2h3.38c-.08.66-.14 1.33-.14 2 0 .67.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56A7.987 7.987 0 0 1 5.08 16zm2.95-8H5.08a7.987 7.987 0 0 1 3.38-3.56c-.6 1.11-1.06 2.31-1.38 3.56zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.34-.16-2 0-.67.07-1.35.16-2h4.68c.09.65.16 1.33.16 2 0 .66-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a7.987 7.987 0 0 1-4.33 3.56zM16.36 14c.08-.66.14-1.33.14-2 0-.67-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/>
+        </svg>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`rounded-2xl bg-gradient-to-tr from-slate-700 to-slate-500 text-slate-100 flex items-center justify-center shadow-lg ${className}`}>
+      <span className="font-black text-xl">{name ? name.charAt(0).toUpperCase() : "U"}</span>
+    </div>
+  );
+}
+
 export default function Login() {
-  const { usuarios, login, cargando } = useInventory();
+  const { usuarios, login } = useAuth();
+  const { cargando } = useInventory();
+
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
   const [pin, setPin] = useState("");
   const pinInputRef = useRef(null);
@@ -64,19 +104,32 @@ export default function Login() {
     }
   };
 
-  if (cargando) {
+  // Timeout fallback para evitar bucle de carga infinito si la red falla y realmente hay 0 usuarios
+  const [timeoutSuperado, setTimeoutSuperado] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (usuarios.length === 0) {
+        setTimeoutSuperado(true);
+      }
+    }, 6000); // 6 segundos de gracia para Sheets
+    return () => clearTimeout(timer);
+  }, [usuarios]);
+
+  if ((cargando || usuarios.length === 0) && !timeoutSuperado) {
     return (
       <div className="min-h-screen bg-[#0b1326] flex flex-col items-center justify-center text-slate-200">
         <div className="relative flex items-center justify-center">
           <div className="w-16 h-16 border-4 border-amber-500/20 border-t-amber-500 rounded-full animate-spin"></div>
-          <span className="material-symbols-outlined text-amber-500 text-3xl absolute animate-pulse">lock</span>
+          <span className="material-symbols-outlined text-amber-500 text-3xl absolute animate-pulse">supervised_user_circle</span>
         </div>
-        <p className="mt-6 text-sm font-black uppercase tracking-[0.2em] text-slate-400 animate-pulse">
-          Cargando Sistema de Inventario...
+        <p className="mt-6 text-xs sm:text-sm font-black uppercase tracking-[0.2em] text-slate-400 animate-pulse text-center px-4">
+          Obteniendo perfiles de acceso...
         </p>
       </div>
     );
   }
+
 
   return (
     <div className="min-h-screen bg-[#0b1326] text-slate-100 flex items-center justify-center p-4 relative overflow-hidden select-none">
@@ -114,13 +167,12 @@ export default function Login() {
                     onClick={() => setUsuarioSeleccionado(u)}
                     className="group flex flex-col items-center p-5 rounded-2xl bg-slate-950/40 border border-[#334155]/40 hover:border-amber-500/50 hover:bg-slate-950/80 transition-all duration-300 transform hover:-translate-y-1 shadow-md"
                   >
-                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-xl font-black mb-4 transition-transform duration-300 group-hover:scale-105 shadow-lg ${
-                      esAdmin 
-                        ? "bg-gradient-to-tr from-amber-500 to-yellow-400 text-slate-950" 
-                        : "bg-gradient-to-tr from-purple-600 to-indigo-500 text-slate-100"
-                    }`}>
-                      {inicial}
-                    </div>
+                    <UserAvatar 
+                      avatarType={u.avatar} 
+                      rol={u.rol} 
+                      name={u.nombre} 
+                      className="w-16 h-16 mb-4 transition-transform duration-300 group-hover:scale-105" 
+                    />
                     <span className="font-bold text-slate-300 group-hover:text-slate-100 transition-colors text-sm truncate max-w-full">
                       {u.nombre}
                     </span>
@@ -132,7 +184,7 @@ export default function Login() {
               })}
               {usuarios.length === 0 && (
                 <div className="col-span-full py-8 text-slate-400 text-sm">
-                  No se encontraron usuarios configurados en Google Sheets.
+                  No se encontraron perfiles de acceso. Recarga la página o verifica la conexión.
                 </div>
               )}
             </div>
@@ -151,13 +203,12 @@ export default function Login() {
 
             {/* Perfil del Usuario Activo */}
             <div className="flex flex-col items-center mb-6">
-              <div className={`w-14 h-14 rounded-xl flex items-center justify-center text-lg font-black mb-3 ${
-                usuarioSeleccionado.rol.toLowerCase() === "admin"
-                  ? "bg-amber-500/10 border border-amber-500/20 text-amber-500"
-                  : "bg-purple-600/10 border border-purple-600/20 text-purple-400"
-              }`}>
-                {usuarioSeleccionado.nombre.charAt(0).toUpperCase()}
-              </div>
+              <UserAvatar 
+                avatarType={usuarioSeleccionado.avatar} 
+                rol={usuarioSeleccionado.rol} 
+                name={usuarioSeleccionado.nombre} 
+                className="w-14 h-14 mb-3" 
+              />
               <h3 className="font-black text-slate-200 text-base">{usuarioSeleccionado.nombre}</h3>
               <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mt-0.5">
                 Ingresa PIN para autorizar

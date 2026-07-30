@@ -71,14 +71,14 @@ export default function Movimientos() {
             <SkeletonTable rows={itemsPorPagina} cols={8} />
           ) : (
             <>
-              <div className="flex flex-col md:flex-row gap-4 border-b border-slate-100 pb-5 mb-5 justify-between items-center">
+              <div className="flex flex-col sm:flex-row gap-3 border-b border-slate-100 pb-5 mb-5 justify-between items-stretch sm:items-center">
                 <input
                   placeholder={t("pages.movimientos.search_placeholder")}
                   value={busqueda}
                   onChange={(e) => { setBusqueda(e.target.value); setPagina(1); }}
-                  className="input-field w-full md:max-w-md"
+                  className="input-field w-full sm:max-w-md"
                 />
-                <select value={filtroTipo} onChange={(e) => { setFiltroTipo(e.target.value); setPagina(1); }} className="select-field w-56">
+                <select value={filtroTipo} onChange={(e) => { setFiltroTipo(e.target.value); setPagina(1); }} className="select-field w-full sm:w-48">
                   <option value="todos">{t("pages.movimientos.all_types")}</option>
                   <option value="entrada">{t("pages.movimientos.entries")}</option>
                   <option value="salida">{t("pages.movimientos.exits")}</option>

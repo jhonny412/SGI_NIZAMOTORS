@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useInventory } from "../context/useInventory";
+import { useUI } from "../context/useUI";
 import { useTranslation, Trans } from "react-i18next";
 import { SkeletonTable } from "../components/Skeleton";
 import CategoriaFormModal from "../components/CategoriaFormModal";
@@ -7,8 +8,10 @@ import SortableTh from "../components/SortableTh";
 import { matchSearch } from "../utils/search";
 
 export default function Categorias() {
-  const { categorias, eliminarCategoria, productos, cargando, setPaginaActiva } = useInventory();
+  const { categorias, eliminarCategoria, productos, cargando } = useInventory();
+  const { setPaginaActiva } = useUI();
   const { t } = useTranslation();
+
   const [busqueda, setBusqueda] = useState("");
   const [pagina, setPagina] = useState(1);
   const [orden, setOrden] = useState({ campo: "nombre", dir: "asc" });

@@ -109,7 +109,7 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
       {/* ========================================== */}
       {/* 1. SCREEN VIEW (VISTA PREVIA DEL SISTEMA) */}
       {/* ========================================== */}
-      <div className="modal-content max-w-3xl w-full animate-slide-up border-[#334155] rounded-3xl relative overflow-hidden no-print">
+      <div className="modal-content max-w-3xl w-full mx-4 sm:mx-auto animate-slide-up border-[#334155] rounded-3xl relative overflow-hidden no-print">
 
         {/* Modal Header */}
         <div className="flex items-start justify-between bg-slate-950 px-6 py-5 rounded-t-2xl relative overflow-hidden border-b border-[#334155] sticky top-0 z-10">

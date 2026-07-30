@@ -173,24 +173,26 @@ export default function Creditos() {
       </div>
 
       {/* Filtros */}
-      <div className="card p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
-        <div className="relative w-full md:max-w-xs">
-          <svg className="absolute left-3 top-3.5 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-          <input
-            type="text"
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Buscar por repuesto, tienda o notas..."
-            className="input-field pl-9 w-full py-2.5"
-          />
-        </div>
-        <div className="flex bg-slate-100 dark:bg-slate-950 p-1 rounded-lg w-full md:w-auto overflow-x-auto">
-          <button onClick={() => setFiltroEstado("todos")} className={`flex-1 md:flex-none px-4 py-2 text-xs font-bold rounded-md transition-all whitespace-nowrap cursor-pointer ${filtroEstado === "todos" ? "bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-sm" : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-300"}`}>{t("pages.creditos.filter_all")}</button>
-          <button onClick={() => setFiltroEstado("pendiente")} className={`flex-1 md:flex-none px-4 py-2 text-xs font-bold rounded-md transition-all whitespace-nowrap cursor-pointer ${filtroEstado === "pendiente" ? "bg-amber-500 text-white shadow-sm" : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-300"}`}>{t("pages.creditos.filter_pending")}</button>
-          <button onClick={() => setFiltroEstado("devuelto")} className={`flex-1 md:flex-none px-4 py-2 text-xs font-bold rounded-md transition-all whitespace-nowrap cursor-pointer ${filtroEstado === "devuelto" ? "bg-emerald-600 text-white shadow-sm" : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-300"}`}>{t("pages.creditos.filter_resolved")} (Devuelto)</button>
-          <button onClick={() => setFiltroEstado("pagado")} className={`flex-1 md:flex-none px-4 py-2 text-xs font-bold rounded-md transition-all whitespace-nowrap cursor-pointer ${filtroEstado === "pagado" ? "bg-blue-600 text-white shadow-sm" : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-300"}`}>{t("pages.creditos.filter_resolved")} (Pagado)</button>
+      <div className="card p-4 flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
+          <div className="relative flex-1 sm:max-w-xs">
+            <svg className="absolute left-3 top-3.5 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              placeholder="Buscar por repuesto, tienda o notas..."
+              className="input-field pl-9 w-full py-2.5"
+            />
+          </div>
+          <div className="flex bg-slate-100 dark:bg-slate-950 p-1 rounded-lg overflow-x-auto gap-1">
+            <button onClick={() => setFiltroEstado("todos")} className={`flex-1 sm:flex-none px-3 py-2 text-xs font-bold rounded-md transition-all whitespace-nowrap cursor-pointer ${filtroEstado === "todos" ? "bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-sm" : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-300"}`}>{t("pages.creditos.filter_all")}</button>
+            <button onClick={() => setFiltroEstado("pendiente")} className={`flex-1 sm:flex-none px-3 py-2 text-xs font-bold rounded-md transition-all whitespace-nowrap cursor-pointer ${filtroEstado === "pendiente" ? "bg-amber-500 text-white shadow-sm" : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-300"}`}>{t("pages.creditos.filter_pending")}</button>
+            <button onClick={() => setFiltroEstado("devuelto")} className={`flex-1 sm:flex-none px-3 py-2 text-xs font-bold rounded-md transition-all whitespace-nowrap cursor-pointer ${filtroEstado === "devuelto" ? "bg-emerald-600 text-white shadow-sm" : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-300"}`}>Devuelto</button>
+            <button onClick={() => setFiltroEstado("pagado")} className={`flex-1 sm:flex-none px-3 py-2 text-xs font-bold rounded-md transition-all whitespace-nowrap cursor-pointer ${filtroEstado === "pagado" ? "bg-blue-600 text-white shadow-sm" : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-300"}`}>Pagado</button>
+          </div>
         </div>
       </div>
 
@@ -237,25 +239,25 @@ export default function Creditos() {
                       {tItem.estado === "pagado" && <span className="badge-info">{t("pages.creditos.status_paid")}</span>}
                     </td>
                     <td>
-                      <div className="flex items-center justify-center gap-2">
-                        <button onClick={() => setTrasladoDetalle(tItem)} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-rose-500/10 text-slate-700 hover:text-rose-600 dark:bg-slate-950/40 dark:text-slate-300 dark:hover:bg-rose-500/10 dark:hover:text-rose-400 border border-slate-200 dark:border-slate-800/80 transition-all text-xs font-bold cursor-pointer" title="Ver detalle del préstamo">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="flex items-center justify-center gap-1.5 flex-wrap min-w-[120px]">
+                        <button onClick={() => setTrasladoDetalle(tItem)} className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-50 hover:bg-rose-500/10 text-slate-700 hover:text-rose-600 dark:bg-slate-950/40 dark:text-slate-300 dark:hover:bg-rose-500/10 dark:hover:text-rose-400 border border-slate-200 dark:border-slate-800/80 transition-all text-xs font-bold cursor-pointer whitespace-nowrap" title="Ver detalle del préstamo">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                           </svg>
-                          Ver detalle
+                          <span className="hidden sm:inline">Ver</span>
                         </button>
                         {tItem.estado === "pendiente" ? (
                           <>
-                            <button onClick={() => confirmarResolucion(tItem.id, "devuelto")} className="inline-flex items-center px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-500 transition-all shadow-sm cursor-pointer" title={t("pages.creditos.actions.mark_returned")}>Devuelto</button>
-                            <button onClick={() => confirmarResolucion(tItem.id, "pagado")} className="inline-flex items-center px-2.5 py-1.5 rounded-lg bg-blue-600 text-white font-bold text-xs hover:bg-blue-500 transition-all shadow-sm cursor-pointer" title={t("pages.creditos.actions.mark_paid")}>Pagó</button>
+                            <button onClick={() => confirmarResolucion(tItem.id, "devuelto")} className="inline-flex items-center px-2 py-1.5 rounded-lg bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-500 transition-all shadow-sm cursor-pointer whitespace-nowrap">Devuelto</button>
+                            <button onClick={() => confirmarResolucion(tItem.id, "pagado")} className="inline-flex items-center px-2 py-1.5 rounded-lg bg-blue-600 text-white font-bold text-xs hover:bg-blue-500 transition-all shadow-sm cursor-pointer whitespace-nowrap">Pagó</button>
                           </>
                         ) : (
-                          <span className="text-xs text-slate-400 dark:text-slate-500 font-medium italic">Resuelto ({tItem.fechaResolucion})</span>
+                          <span className="text-xs text-slate-400 dark:text-slate-500 font-medium italic whitespace-nowrap">Resuelto</span>
                         )}
                         {tItem.notas && (
                           <button onClick={() => mostrarNotas(tItem.notas)} className="p-1.5 text-slate-400 hover:text-amber-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer" title={t("pages.creditos.actions.view_notes")}>
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
                           </button>
@@ -300,7 +302,7 @@ function ModalDetallePréstamo({ traslado, productos, onCerrar, onResolver, t })
 
   return (
     <div className="modal-overlay" onClick={onCerrar}>
-      <div className="modal-content max-w-xl w-full animate-slide-up" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content max-w-lg w-full mx-4 sm:mx-auto animate-slide-up" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between bg-slate-950 px-6 py-5 rounded-t-2xl relative overflow-hidden border-b border-[#334155]">
           <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-xl pointer-events-none" />
           <div className="relative z-10">

@@ -1,72 +1,78 @@
-import { Fragment } from "react";
-import { useInventory } from "../context/useInventory";
+import { Fragment, useMemo } from "react";
+import { useAuth } from "../context/useAuth";
+import { useUI } from "../context/useUI";
+import { ROUTES } from "../config/routes";
 import { useTranslation } from "react-i18next";
 import logoDark from "../assets/logo.png";
 
 export default function Sidebar() {
-  const { paginaActiva, setPaginaActiva, sidebarAbierto, setSidebarAbierto, usuarioActivo } = useInventory();
+  const { paginaActiva, setPaginaActiva, sidebarAbierto, setSidebarAbierto } = useUI();
+  const { usuarioActivo } = useAuth();
+
   const { t } = useTranslation();
 
-  const esVendedor = usuarioActivo?.rol?.toLowerCase() === "vendedor";
+  const rol = usuarioActivo?.rol?.toLowerCase() || "vendedor";
 
-  const menuStructure = [
-    {
-      type: "item",
-      id: "dashboard",
-      label: t("menu.inicio"),
-      icon: "dashboard"
-    },
-    {
-      type: "group",
-      title: t("menu.comercial"),
-      icon: "payments",
-      items: [
-        { id: "ventas", label: t("menu.ventas"), icon: "point_of_sale" },
-        { id: "creditos", label: t("menu.creditos"), icon: "credit_card" }
-      ]
-    },
-    ...(!esVendedor ? [
-      {
-        type: "group",
-        title: t("menu.inventario"),
-        icon: "inventory_2",
-        items: [
-          {
-            id: "productos",
-            label: t("menu.productos"),
-            icon: "inventory_2",
-            children: [
-              { id: "categorias", label: t("menu.categorias"), icon: "category" },
-              { id: "marcas", label: t("menu.marcas"), icon: "sell" }
-            ]
-          },
-          { id: "movimientos", label: t("menu.movimientos"), icon: "history" },
-          { id: "kardex", label: t("menu.kardex"), icon: "timeline" }
-        ]
-      },
-      {
-        type: "group",
-        title: t("menu.compras"),
-        icon: "local_shipping",
-        items: [
-          { id: "proveedores", label: t("menu.proveedores"), icon: "local_shipping" }
-        ]
-      }
-    ] : [
-      {
-        type: "group",
-        title: t("menu.inventario"),
-        icon: "inventory_2",
-        items: [
-          {
-            id: "productos",
-            label: t("menu.productos"),
-            icon: "inventory_2"
+  // Build menu dynamically based on ROUTES OCP config
+  const menuStructure = useMemo(() => {
+    const list = [];
+    
+    // 1. Dashboard (Item principal sin grupo)
+    if (ROUTES.dashboard.roles.includes(rol)) {
+      list.push({
+        type: "item",
+        id: "dashboard",
+        label: t(ROUTES.dashboard.labelKey),
+        icon: ROUTES.dashboard.icon
+      });
+    }
+
+    // Grupos que ya sabemos que existen o se generan de forma dinámica
+    const groups = {};
+
+    Object.values(ROUTES).forEach(route => {
+      // Ignorar items raíz como dashboard y páginas hijas (con parent)
+      if (route.id === "dashboard" || route.parent) return;
+
+      if (route.roles.includes(rol)) {
+        if (route.group) {
+          if (!groups[route.group]) {
+            groups[route.group] = {
+              type: "group",
+              title: t(route.groupLabelKey),
+              icon: route.groupIcon || "folder",
+              items: []
+            };
           }
-        ]
+          
+          // Buscar si tiene hijos (ej. productos -> categorias, marcas)
+          const children = Object.values(ROUTES).filter(r => r.parent === route.id && r.roles.includes(rol)).map(r => ({
+            id: r.id,
+            label: t(r.labelKey),
+            icon: r.icon
+          }));
+
+          groups[route.group].items.push({
+            id: route.id,
+            label: t(route.labelKey),
+            icon: route.icon,
+            ...(children.length > 0 ? { children } : {})
+          });
+        }
       }
-    ])
-  ];
+    });
+
+    // Mantener orden: Comercial (payments) -> Inventario (inventory_2) -> Compras (local_shipping) -> Seguridad (shield)
+    const order = ["comercial", "inventario", "compras", "seguridad"];
+    order.forEach(gId => {
+      if (groups[gId]) {
+        list.push(groups[gId]);
+      }
+    });
+
+    return list;
+  }, [rol, t]);
+
 
   const isGroupActive = (group) => {
     if (group.type === "item") {

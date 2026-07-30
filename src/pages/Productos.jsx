@@ -1,16 +1,21 @@
 import { useState, useMemo, useEffect } from "react";
 import { useInventory } from "../context/useInventory";
+import { useAuth } from "../context/useAuth";
 import { useTranslation, Trans } from "react-i18next";
 import { SkeletonTable } from "../components/Skeleton";
 import ProductFormModal from "../components/ProductFormModal";
 import SortableTh from "../components/SortableTh";
 import Swal from "sweetalert2";
 import { matchSearch } from "../utils/search";
+import { ENDPOINTS } from "../config/endpoints";
+
 
 export default function Productos() {
-  const { productos, eliminarProducto, editarProducto, proveedores, marcas, cargando, usuarioActivo } = useInventory();
+  const { productos, eliminarProducto, editarProducto, proveedores, marcas, cargando } = useInventory();
+  const { usuarioActivo } = useAuth();
   const { t } = useTranslation();
   const esAdmin = usuarioActivo?.rol?.toLowerCase() === "admin";
+
   const [busqueda, setBusqueda] = useState("");
   const [filtroProveedor, setFiltroProveedor] = useState("");
   const [filtroMarca, setFiltroMarca] = useState("");
@@ -32,7 +37,9 @@ export default function Productos() {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
   const itemsPorPagina = 8;
-  const API_URL = "https://script.google.com/macros/s/AKfycbxEL6F6W-TtiadTLzyUXFvGqZYuEopNE1Eq6wtnixTVXcEwbrUo1pw-AGV3n4ktrPU/exec";
+  const API_URL = ENDPOINTS.IMAGE_SEARCH_API_URL;
+
+
 
   const buscarImagen = async (forzarBusqueda = false) => {
     if (!imagenModalProducto) return;
@@ -404,34 +411,34 @@ export default function Productos() {
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
         >
-          <div className="modal-content max-w-2xl w-full overflow-hidden">
-            <div className="flex items-start justify-between bg-slate-950 px-6 py-5 rounded-t-2xl relative overflow-hidden border-b border-[#334155]">
+          <div className="modal-content max-w-2xl w-full !overflow-hidden flex flex-col max-h-[min(92vh,900px)]">
+            <div className="shrink-0 flex items-start justify-between bg-slate-950 px-6 py-4 sm:py-5 rounded-t-2xl relative overflow-hidden border-b border-[#334155]">
               <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-xl pointer-events-none" />
-              <div className="relative z-10">
+              <div className="relative z-10 min-w-0 pr-2">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-[9px] font-black text-amber-400 uppercase tracking-widest bg-amber-950/40 px-2 py-0.5 rounded border border-amber-800/40">
                     Módulo de Imágenes
                   </span>
                 </div>
-                <h3 className="text-xl font-extrabold text-white flex items-center gap-2">
+                <h3 className="text-lg sm:text-xl font-extrabold text-white flex items-center gap-2">
                   <span className="material-symbols-outlined text-amber-500">photo_camera</span>
                   Imagen de Referencia
                 </h3>
-                <p className="text-xs text-slate-400 mt-1 font-medium">
+                <p className="text-xs text-slate-400 mt-1 font-medium hidden sm:block">
                   Visualiza o vincula imágenes de referencia para este producto
                 </p>
               </div>
               <button
                 onClick={() => setImagenModalProducto(null)}
-                className="text-slate-400 hover:text-white transition-all p-1.5 rounded-xl hover:bg-white/10 relative z-10 cursor-pointer"
+                className="text-slate-400 hover:text-white transition-all p-1.5 rounded-xl hover:bg-white/10 relative z-10 cursor-pointer shrink-0"
               >
                 <span className="material-symbols-outlined text-lg">close</span>
               </button>
             </div>
 
-            <div className="p-6 flex flex-col items-center justify-center min-h-[350px]">
+            <div className="p-4 sm:p-6 flex flex-col items-center justify-center flex-1 min-h-0 overflow-y-auto">
               {buscandoImagen ? (
-                <div className="flex flex-col items-center text-slate-400">
+                <div className="flex flex-col items-center text-slate-400 py-8">
                   <svg className="w-8 h-8 animate-spin text-rose-500 mb-2" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -439,7 +446,7 @@ export default function Productos() {
                   <span className="text-sm font-medium">Buscando en Google Images...</span>
                 </div>
               ) : errorImagen ? (
-                <div className="text-center text-red-500 text-sm max-w-[80%]">
+                <div className="text-center text-red-500 text-sm max-w-[80%] py-8">
                   <svg className="w-8 h-8 mx-auto mb-2 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
@@ -448,7 +455,7 @@ export default function Productos() {
               ) : imagenResultado ? (
                 <div className="flex flex-col items-center gap-3 w-full">
                   <span className="text-[10px] font-bold uppercase tracking-wider bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-300 dark:ring-1 dark:ring-purple-800/40 px-2.5 py-0.5 rounded-lg shadow-sm">Resultado de búsqueda</span>
-                  <div className="w-full max-w-[500px] aspect-[4/3] flex items-center justify-center overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800/60 bg-white dark:bg-slate-950 shadow-inner">
+                  <div className="w-full max-w-[500px] h-[min(42vh,320px)] flex items-center justify-center overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800/60 bg-white dark:bg-slate-950 shadow-inner">
                     <img
                       src={imagenResultado}
                       alt={imagenModalProducto.descripcion}
@@ -468,12 +475,12 @@ export default function Productos() {
                   const currentImg = imgs[indexImagen] || imgs[0];
 
                   return (
-                    <div className="flex flex-col items-center gap-4 w-full">
+                    <div className="flex flex-col items-center gap-3 sm:gap-4 w-full">
                       <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-1 dark:ring-emerald-800/40 px-2.5 py-0.5 rounded-lg shadow-sm">
                         Imagen {indexImagen + 1} de {imgs.length} vinculada
                       </span>
 
-                      <div className="w-full max-w-[500px] aspect-[4/3] relative group flex items-center justify-center overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800/60 bg-white dark:bg-slate-950 shadow-inner">
+                      <div className="w-full max-w-[500px] h-[min(42vh,320px)] relative group flex items-center justify-center overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800/60 bg-white dark:bg-slate-950 shadow-inner">
                         <img
                           src={currentImg}
                           alt={`Imagen ${indexImagen + 1}`}
@@ -522,7 +529,7 @@ export default function Productos() {
 
                       <button
                         onClick={() => { setImagenResultado(null); buscarImagen(true); }}
-                        className="text-xs text-rose-500 hover:text-rose-600 dark:text-rose-400 hover:underline font-bold mt-2 cursor-pointer transition-colors"
+                        className="text-xs text-rose-500 hover:text-rose-600 dark:text-rose-400 hover:underline font-bold cursor-pointer transition-colors"
                       >
                         ¿Buscar una imagen diferente?
                       </button>
@@ -530,12 +537,12 @@ export default function Productos() {
                   );
                 })()
               ) : (
-                <div className="text-slate-400 text-sm italic">No hay imagen vinculada</div>
+                <div className="text-slate-400 text-sm italic py-8">No hay imagen vinculada</div>
               )}
             </div>
 
-            <div className="p-4 border-t border-slate-100 dark:border-slate-800/80 flex flex-col gap-3">
-              <div className="text-center text-xs font-semibold text-slate-500 dark:text-slate-400">
+            <div className="shrink-0 p-3 sm:p-4 border-t border-slate-100 dark:border-slate-800/80 flex flex-col gap-2 sm:gap-3 bg-[var(--surface)]">
+              <div className="text-center text-xs font-semibold text-slate-500 dark:text-slate-400 line-clamp-2">
                 {imagenModalProducto.descripcion} ({imagenModalProducto.oem})
               </div>
               {imagenResultado && (

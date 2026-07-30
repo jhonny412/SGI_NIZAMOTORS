@@ -270,11 +270,22 @@
   }
 
   .modal-content {
-    @apply rounded-2xl shadow-2xl w-full border max-h-[90vh] overflow-y-auto;
+    @apply rounded-2xl shadow-2xl w-full border max-h-[92vh] overflow-y-auto;
     background-color: var(--surface);
     border-color: var(--border);
     box-shadow: var(--shadow-xl), 0 0 20px rgba(0, 0, 0, 0.4);
     animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Mobile-first: ensure modals don't exceed screen width */
+  @media (max-width: 639px) {
+    .modal-overlay {
+      @apply items-end p-0;
+    }
+    .modal-content {
+      @apply rounded-b-none rounded-t-2xl max-h-[85vh];
+      animation: slideUpMobile 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
   }
 
   .page-header {
@@ -313,6 +324,22 @@
   .stagger-2 { animation-delay: 80ms; }
   .stagger-3 { animation-delay: 120ms; }
   .stagger-4 { animation-delay: 160ms; }
+
+  /* Responsive action button groups — wrap on mobile */
+  .action-group {
+    @apply flex items-center gap-1 flex-wrap;
+  }
+
+  /* Responsive text utilities */
+  .text-responsive {
+    @apply text-xs sm:text-sm;
+  }
+
+  /* Force horizontal scroll on small screens for data tables */
+  .responsive-table-wrapper {
+    @apply w-full overflow-x-auto -mx-0;
+    scrollbar-width: thin;
+  }
 }
 
 @keyframes fadeIn {
@@ -328,6 +355,17 @@
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes slideUpMobile {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 

@@ -1,10 +1,14 @@
 import Sidebar from "./Sidebar";
 import LanguageSwitcher from "./LanguageSwitcher";
 import { useInventory } from "../context/useInventory";
+import { useAuth } from "../context/useAuth";
+import { useUI } from "../context/useUI";
 import { useTranslation } from "react-i18next";
 
 export default function Layout({ children }) {
-  const { sidebarAbierto, paginaActiva, setSidebarAbierto, tema, toggleTema, usuarioActivo, logout } = useInventory();
+  const { sidebarAbierto, paginaActiva, setSidebarAbierto, tema, toggleTema } = useUI();
+  const { usuarioActivo, logout } = useAuth();
+
   const { t } = useTranslation();
 
   const pageNames = {
@@ -23,16 +27,16 @@ export default function Layout({ children }) {
     <div className="min-h-screen bg-[#0b1326] text-slate-100 flex flex-col">
       <Sidebar />
       <main
-        className={`flex-1 min-h-screen flex flex-col transition-all duration-300 ease-out ${
+        className={`flex-1 min-h-screen flex flex-col transition-all duration-300 ease-out ml-0 ${
           sidebarAbierto ? "lg:ml-64" : "lg:ml-[72px]"
         }`}
       >
         <header className="sticky top-0 z-40 border-b border-[#334155]/60 bg-[#0b1326]/85 backdrop-blur-md transition-all duration-300">
-          <div className="flex h-16 items-center justify-between gap-4 px-4 md:px-6 lg:px-8">
-            <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-14 sm:h-16 items-center justify-between gap-3 px-3 sm:px-4 md:px-6 lg:px-8">
+            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
               <button
                 onClick={() => setSidebarAbierto(!sidebarAbierto)}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#334155] bg-slate-900 text-slate-350 shadow-sm transition-colors hover:bg-slate-800 hover:text-white lg:hidden"
+                className="inline-flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl border border-[#334155] bg-slate-900 text-slate-350 shadow-sm transition-colors hover:bg-slate-800 hover:text-white lg:hidden shrink-0"
                 aria-label={t("common.toggle_menu")}
               >
                 <span className="material-symbols-outlined text-lg">menu</span>
@@ -42,13 +46,13 @@ export default function Layout({ children }) {
                   <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-500">
                     NIZA MOTORS
                   </p>
-                  <h1 className="truncate text-base font-black text-amber-500 tracking-tight uppercase">
+                  <h1 className="truncate text-sm sm:text-base font-black text-amber-500 tracking-tight uppercase">
                     {pageNames[paginaActiva] || t("pages.dashboard.title")}
                   </h1>
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4 shrink-0">
               <LanguageSwitcher />
               
               <button
@@ -65,8 +69,8 @@ export default function Layout({ children }) {
               </button>
               
               {usuarioActivo && (
-                <div className="hidden items-center gap-3 sm:flex pl-4 border-l border-[#334155]/50">
-                  <div className="text-right">
+                <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-4 border-l border-[#334155]/50">
+                  <div className="hidden sm:block text-right">
                     <p className="text-xs font-black text-slate-200 leading-tight">{usuarioActivo.nombre}</p>
                     <p className="text-[8px] font-black text-amber-500 uppercase tracking-widest mt-0.5">{usuarioActivo.rol}</p>
                   </div>
@@ -74,7 +78,7 @@ export default function Layout({ children }) {
                     <button
                       onClick={logout}
                       title="Cerrar sesión"
-                      className={`relative flex h-9 w-9 items-center justify-center rounded-xl text-sm font-black shadow-md hover:scale-105 hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/30 border border-transparent transition-all duration-300 cursor-pointer ${
+                      className={`relative flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl text-sm font-black shadow-md hover:scale-105 hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/30 border border-transparent transition-all duration-300 cursor-pointer ${
                         usuarioActivo.rol.toLowerCase() === "admin"
                           ? "bg-amber-500 text-slate-950"
                           : "bg-purple-600 text-slate-100"
@@ -94,7 +98,7 @@ export default function Layout({ children }) {
           </div>
         </header>
 
-        <div className="mx-auto w-full max-w-[1600px] p-4 md:p-6 lg:p-8 flex-1 flex flex-col">
+        <div className="mx-auto w-full max-w-[1600px] p-3 sm:p-4 md:p-6 lg:p-8 flex-1 flex flex-col">
           {children}
         </div>
       </main>

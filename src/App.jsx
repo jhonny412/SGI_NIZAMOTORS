@@ -1,18 +1,16 @@
 import { useEffect } from "react";
+import { AuthProvider } from "./context/AuthContext";
+import { UIProvider } from "./context/UIContext";
 import { InventoryProvider } from "./context/InventoryContext";
 import { useInventory } from "./context/useInventory";
+import { useAuth } from "./context/useAuth";
+import { useUI } from "./context/useUI";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import Productos from "./pages/Productos";
-import Proveedores from "./pages/Proveedores";
-import Movimientos from "./pages/Movimientos";
-import Kardex from "./pages/Kardex";
-import Marcas from "./pages/Marcas";
-import Creditos from "./pages/Creditos";
-import Categorias from "./pages/Categorias";
-import Ventas from "./pages/Ventas";
-import { initLogger, flushPendingLogs, getPendingCount } from "./utils/logger";
+import { ROUTES } from "./config/routes";
+import { initLogger, flushPendingLogs } from "./utils/logger";
+
+
 
 // ──────────────────────────────────────────────────────────────
 // Componente raíz: maneja la sincronización de logs pendientes
@@ -36,38 +34,24 @@ function LogSyncManager() {
 }
 
 function AppContent() {
-  const { paginaActiva, usuarioActivo } = useInventory();
+  const { paginaActiva } = useUI();
+  const { usuarioActivo } = useAuth();
+
 
   const renderPage = () => {
-    const esVendedor = usuarioActivo?.rol?.toLowerCase() === "vendedor";
-    const paginasPermitidas = esVendedor
-      ? ["dashboard", "productos", "ventas", "creditos"]
-      : ["dashboard", "productos", "ventas", "movimientos", "kardex", "proveedores", "marcas", "categorias", "creditos"];
-
-    const paginaARenderizar = paginasPermitidas.includes(paginaActiva) ? paginaActiva : "dashboard";
-
-    switch (paginaARenderizar) {
-      case "dashboard":
-        return <Dashboard />;
-      case "productos":
-        return <Productos />;
-      case "ventas":
-        return <Ventas />;
-      case "movimientos":
-        return <Movimientos />;
-      case "kardex":
-        return <Kardex />;
-      case "proveedores":
-        return <Proveedores />;
-      case "marcas":
-        return <Marcas />;
-      case "categorias":
-        return <Categorias />;
-      case "creditos":
-        return <Creditos />;
-      default:
-        return <Dashboard />;
+    const rol = usuarioActivo?.rol?.toLowerCase() || "vendedor";
+    const routeConfig = ROUTES[paginaActiva];
+    
+    // Si la ruta existe y el rol está permitido, renderizar su componente.
+    // De lo contrario, caer en el dashboard (o redirigir si el rol lo permite).
+    if (routeConfig && routeConfig.roles.includes(rol)) {
+      const Component = routeConfig.component;
+      return <Component />;
     }
+
+    // Fallback: buscar dashboard o primera ruta permitida
+    const DashboardComponent = ROUTES.dashboard.component;
+    return <DashboardComponent />;
   };
 
   if (!usuarioActivo) {
@@ -77,11 +61,20 @@ function AppContent() {
   return <Layout>{renderPage()}</Layout>;
 }
 
+
+
+
+
 export default function App() {
   return (
-    <InventoryProvider>
-      <LogSyncManager />
-      <AppContent />
-    </InventoryProvider>
+    <AuthProvider>
+      <UIProvider>
+        <InventoryProvider>
+          <LogSyncManager />
+          <AppContent />
+        </InventoryProvider>
+      </UIProvider>
+    </AuthProvider>
   );
 }
+

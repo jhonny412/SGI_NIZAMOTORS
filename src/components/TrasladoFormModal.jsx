@@ -176,7 +176,7 @@ export default function TrasladoFormModal({ abierto, onCerrar }) {
 
   return (
     <div className="modal-overlay z-50" onClick={(e) => e.target === e.currentTarget && handleCerrar()}>
-      <div className="modal-content max-w-2xl w-full animate-slide-up border-[#334155]">
+      <div className="modal-content max-w-2xl w-full mx-4 sm:mx-auto animate-slide-up border-[#334155]">
         {/* Header */}
         <div className="flex items-start justify-between bg-slate-950 px-6 py-5 rounded-t-2xl relative overflow-hidden border-b border-[#334155]">
           <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-xl pointer-events-none" />

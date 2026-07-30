@@ -114,7 +114,7 @@ export default function ProductFormModal({ producto, abierto, onCerrar }) {
 
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && handleCerrar()}>
-      <div className="modal-content max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="modal-content max-w-2xl w-full mx-4 sm:mx-auto max-h-[90vh] overflow-y-auto">
         {/* Redesigned Modal Header */}
         <div className="flex items-start justify-between bg-slate-950 px-6 py-5 rounded-t-2xl relative overflow-hidden border-b border-[#334155] sticky top-0 z-10">
           <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-xl pointer-events-none" />

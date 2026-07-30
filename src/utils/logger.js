@@ -1,4 +1,7 @@
-const API_URL = import.meta.env.VITE_GOOGLE_API_KEY || "https://script.google.com/macros/s/AKfycby21OVCxlklX09ERRq38rozGun5ZWr0LKPKzyEAJN78J-2ssBlYIGkd0cbrPfp8uEe5/exec";
+import { ENDPOINTS } from "../config/endpoints";
+
+const API_URL = ENDPOINTS.INVENTORY_API_URL;
+
 
 // Claves de localStorage
 const KEY_PENDING   = "sgi-pending-logs";   // Cola de logs pendientes de sincronizar con Sheets
@@ -119,16 +122,17 @@ function encolarPendiente(logEntry) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Intentar enviar UN log a Google Sheets
+// Intentar enviar UN log a MySQL
 // ─────────────────────────────────────────────────────────────
 async function enviarASheets(logEntry) {
-  await fetch(API_URL, {
+  const response = await fetch(API_URL, {
     method: "POST",
-    mode: "no-cors",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(logEntry)
   });
-  // mode: "no-cors" resuelve con red estable y lanza TypeError sin red
+  if (!response.ok) {
+    throw new Error(`HTTP error writing log: ${response.status}`);
+  }
 }
 
 // ─────────────────────────────────────────────────────────────
