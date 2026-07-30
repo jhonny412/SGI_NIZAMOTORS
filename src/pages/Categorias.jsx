@@ -4,6 +4,7 @@ import { useUI } from "../context/useUI";
 import { useTranslation, Trans } from "react-i18next";
 import { SkeletonTable } from "../components/Skeleton";
 import CategoriaFormModal from "../components/CategoriaFormModal";
+import Pagination from "../components/Pagination";
 import SortableTh from "../components/SortableTh";
 import { matchSearch } from "../utils/search";
 
@@ -179,7 +180,7 @@ export default function Categorias() {
               </div>
 
               {totalPaginas > 1 && (
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mt-5 pt-4 border-t border-slate-100">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mt-5 pt-4 border-t border-slate-100 dark:border-slate-800">
                   <p className="text-sm text-slate-500">
                     <Trans 
                       i18nKey="pages.categorias.pagination.showing" 
@@ -187,13 +188,7 @@ export default function Categorias() {
                       components={{ bold: <strong className="text-slate-700 dark:text-slate-200" /> }}
                     />
                   </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    <button onClick={() => setPagina((p) => Math.max(1, p - 1))} disabled={pagina === 1} className="pagination-btn">{t("pages.productos.pagination.previous")}</button>
-                    {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((n) => (
-                      <button key={n} onClick={() => setPagina(n)} className={pagina === n ? "pagination-btn-active" : "pagination-btn"}>{n}</button>
-                    ))}
-                    <button onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))} disabled={pagina === totalPaginas} className="pagination-btn">{t("pages.productos.pagination.next")}</button>
-                  </div>
+                  <Pagination pagina={pagina} totalPaginas={totalPaginas} setPagina={setPagina} />
                 </div>
               )}
             </>

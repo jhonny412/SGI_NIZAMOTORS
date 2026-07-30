@@ -5,6 +5,7 @@ import { SkeletonCard, SkeletonTable } from "../components/Skeleton";
 import VentaFormModal from "../components/VentaFormModal";
 import VentaDetalleModal from "../components/VentaDetalleModal";
 import SortableTh from "../components/SortableTh";
+import Pagination from "../components/Pagination";
 import { matchSearch } from "../utils/search";
 
 export default function Ventas() {
@@ -381,7 +382,7 @@ export default function Ventas() {
 
               {/* Pagination */}
               {totalPaginas > 1 && (
-                <div className="p-4 bg-slate-950/20 border-t border-[#334155]/60 flex items-center justify-between">
+                <div className="p-4 bg-slate-950/20 border-t border-[#334155]/60 flex flex-col sm:flex-row items-center justify-between gap-3">
                   <p className="text-xs text-slate-450 font-medium">
                     <Trans 
                       i18nKey="pages.ventas.pagination.showing" 
@@ -389,31 +390,7 @@ export default function Ventas() {
                       components={{ bold: <strong className="text-slate-700 dark:text-slate-200" /> }}
                     />
                   </p>
-                  <div className="flex gap-1.5">
-                    <button
-                      onClick={() => setPagina((p) => Math.max(1, p - 1))}
-                      disabled={pagina === 1}
-                      className="pagination-btn px-3 py-1.5 text-xs"
-                    >
-                      {t("pages.productos.pagination.previous")}
-                    </button>
-                    {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((n) => (
-                      <button
-                        key={n}
-                        onClick={() => setPagina(n)}
-                        className={pagina === n ? "pagination-btn-active w-8 h-8 flex items-center justify-center text-xs" : "pagination-btn w-8 h-8 flex items-center justify-center text-xs"}
-                      >
-                        {n}
-                      </button>
-                    ))}
-                    <button
-                      onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
-                      disabled={pagina === totalPaginas}
-                      className="pagination-btn px-3 py-1.5 text-xs"
-                    >
-                      {t("pages.productos.pagination.next")}
-                    </button>
-                  </div>
+                  <Pagination pagina={pagina} totalPaginas={totalPaginas} setPagina={setPagina} />
                 </div>
               )}
             </>

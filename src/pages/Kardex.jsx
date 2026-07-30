@@ -3,6 +3,7 @@ import { useInventory } from "../context/useInventory";
 import { useTranslation, Trans } from "react-i18next";
 import { SkeletonTable } from "../components/Skeleton";
 import SortableTh from "../components/SortableTh";
+import Pagination from "../components/Pagination";
 
 export default function Kardex() {
   const { movimientos, productos, cargando, formatFecha } = useInventory();
@@ -229,7 +230,7 @@ export default function Kardex() {
 
               {/* Pagination & Stats */}
               {totalPaginas > 1 && (
-                <div className="p-4 bg-slate-950/20 border-t border-[#334155]/60 flex items-center justify-between">
+                <div className="p-4 bg-slate-950/20 border-t border-[#334155]/60 flex flex-col sm:flex-row items-center justify-between gap-3">
                   <p className="text-xs text-slate-450 font-medium">
                     <Trans 
                       i18nKey="pages.kardex.pagination.showing" 
@@ -237,31 +238,7 @@ export default function Kardex() {
                       components={{ bold: <strong className="text-slate-700 dark:text-slate-200" /> }}
                     />
                   </p>
-                  <div className="flex gap-1">
-                    <button 
-                      onClick={() => setPagina((p) => Math.max(1, p - 1))} 
-                      disabled={pagina === 1} 
-                      className="pagination-btn px-3 py-1.5 text-xs"
-                    >
-                      {t("pages.productos.pagination.previous")}
-                    </button>
-                    {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((n) => (
-                      <button 
-                        key={n} 
-                        onClick={() => setPagina(n)} 
-                        className={pagina === n ? "pagination-btn-active w-8 h-8 flex items-center justify-center text-xs" : "pagination-btn w-8 h-8 flex items-center justify-center text-xs"}
-                      >
-                        {n}
-                      </button>
-                    ))}
-                    <button 
-                      onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))} 
-                      disabled={pagina === totalPaginas} 
-                      className="pagination-btn px-3 py-1.5 text-xs"
-                    >
-                      {t("pages.productos.pagination.next")}
-                    </button>
-                  </div>
+                  <Pagination pagina={pagina} totalPaginas={totalPaginas} setPagina={setPagina} />
                 </div>
               )}
             </>

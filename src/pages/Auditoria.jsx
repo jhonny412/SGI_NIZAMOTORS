@@ -3,6 +3,7 @@ import { useInventory } from "../context/useInventory";
 import { useTranslation, Trans } from "react-i18next";
 import { SkeletonTable } from "../components/Skeleton";
 import { fetchSheet } from "../services/api";
+import Pagination from "../components/Pagination";
 import SortableTh from "../components/SortableTh";
 import { matchSearch } from "../utils/search";
 
@@ -225,35 +226,11 @@ export default function Auditoria() {
 
               {/* Paginación */}
               {totalPaginas > 1 && (
-                <div className="p-4 bg-slate-950/20 border-t border-[#334155]/60 flex items-center justify-between">
+                <div className="p-4 bg-slate-950/20 border-t border-[#334155]/60 flex flex-col sm:flex-row items-center justify-between gap-3">
                   <p className="text-xs text-slate-400 font-medium">
                     Mostrando <strong>{itemsPagina.length}</strong> de <strong>{filtrados.length}</strong> registros
                   </p>
-                  <div className="flex gap-1.5">
-                    <button
-                      onClick={() => setPagina((p) => Math.max(1, p - 1))}
-                      disabled={pagina === 1}
-                      className="pagination-btn px-3 py-1.5 text-xs"
-                    >
-                      Anterior
-                    </button>
-                    {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((n) => (
-                      <button
-                        key={n}
-                        onClick={() => setPagina(n)}
-                        className={pagina === n ? "pagination-btn-active w-8 h-8 flex items-center justify-center text-xs" : "pagination-btn w-8 h-8 flex items-center justify-center text-xs"}
-                      >
-                        {n}
-                      </button>
-                    ))}
-                    <button
-                      onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
-                      disabled={pagina === totalPaginas}
-                      className="pagination-btn px-3 py-1.5 text-xs"
-                    >
-                      Siguiente
-                    </button>
-                  </div>
+                  <Pagination pagina={pagina} totalPaginas={totalPaginas} setPagina={setPagina} />
                 </div>
               )}
             </>
