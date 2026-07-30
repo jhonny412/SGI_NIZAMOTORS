@@ -146,10 +146,17 @@ export async function handler(event, context) {
 
         const keys = Object.keys(payload);
 
-        // Mapear objetos/arrays a strings de JSON para MySQL
-        const mappedValues = Object.values(payload).map(val => 
-          val !== null && typeof val === "object" ? JSON.stringify(val) : val
-        );
+        // Helper para normalizar valores (JSON objects -> string, ISO dates -> Date objects)
+        const formatValue = (val) => {
+          if (val !== null && typeof val === "object") return JSON.stringify(val);
+          if (typeof val === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(val)) {
+            const d = new Date(val);
+            return isNaN(d.getTime()) ? val : d;
+          }
+          return val;
+        };
+
+        const mappedValues = Object.values(payload).map(formatValue);
 
         const insertQuery = `INSERT INTO \`${tableName}\` (\`${keys.join("`, `")}\`) VALUES (${keys.map(() => "?").join(", ")})`;
         const [insertResult] = await dbPool.execute(insertQuery, mappedValues);
@@ -178,9 +185,16 @@ export async function handler(event, context) {
           };
         }
 
-        const mappedValues = Object.values(updateFields).map(val => 
-          val !== null && typeof val === "object" ? JSON.stringify(val) : val
-        );
+        const formatValue = (val) => {
+          if (val !== null && typeof val === "object") return JSON.stringify(val);
+          if (typeof val === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(val)) {
+            const d = new Date(val);
+            return isNaN(d.getTime()) ? val : d;
+          }
+          return val;
+        };
+
+        const mappedValues = Object.values(updateFields).map(formatValue);
 
         const setClause = keys.map(k => `\`${k}\` = ?`).join(", ");
         const updateQuery = `UPDATE \`${tableName}\` SET ${setClause} WHERE id = ?`;
