@@ -71,9 +71,9 @@ CREATE TABLE IF NOT EXISTS `productos` (
   `utilidad` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   `proveedorId` INT DEFAULT NULL,
   `oem` VARCHAR(500) NOT NULL DEFAULT '',
-  `imagenUrl` TEXT NULL,
-  `imagenUrl2` TEXT NULL,
-  `imagenUrl3` TEXT NULL,
+  `imagenUrl` MEDIUMTEXT NULL,
+  `imagenUrl2` MEDIUMTEXT NULL,
+  `imagenUrl3` MEDIUMTEXT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

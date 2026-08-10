@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useInventory } from "../context/useInventory";
 import { useTranslation } from "react-i18next";
 import Swal from "sweetalert2";
@@ -20,6 +20,195 @@ function InputField({ label, name, value, onChange, type = "text", required, pla
         max={max}
         step={step}
         className="input-field"
+      />
+    </div>
+  );
+}
+
+function compressImage(file, callback) {
+  const reader = new FileReader();
+  reader.readAsDataURL(file);
+  reader.onload = (event) => {
+    const img = new Image();
+    img.src = event.target.result;
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      let width = img.width;
+      let height = img.height;
+
+      // Max 1200x1200 px @ 90% JPEG — ultra sharp for local uploads, fits well in MEDIUMTEXT (16 MB)
+      const MAX_WIDTH = 1200;
+      const MAX_HEIGHT = 1200;
+
+      if (width > height) {
+        if (width > MAX_WIDTH) {
+          height = Math.round(height * MAX_WIDTH / width);
+          width = MAX_WIDTH;
+        }
+      } else {
+        if (height > MAX_HEIGHT) {
+          width = Math.round(width * MAX_HEIGHT / height);
+          height = MAX_HEIGHT;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(img, 0, 0, width, height);
+
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.90);
+      callback(dataUrl);
+    };
+  };
+}
+
+function ImagePicker({ label, name, value, onChange }) {
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const processFile = (file) => {
+    if (!file.type.startsWith("image/")) {
+      Swal.fire({
+        icon: "error",
+        title: "Archivo inválido",
+        text: "Por favor selecciona un archivo de imagen.",
+        confirmButtonColor: "#f59e0b"
+      });
+      return;
+    }
+    compressImage(file, (base64Data) => {
+      onChange(name, base64Data);
+    });
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      processFile(file);
+    }
+  };
+
+  const handlePaste = (e) => {
+    // 1. Si se copió una imagen desde otro sitio web, intentamos extraer la URL original
+    // en lugar de convertir la imagen a Base64. Esto mantiene la calidad 100% nativa.
+    const html = e.clipboardData?.getData("text/html");
+    if (html) {
+      const match = html.match(/src=["']([^"']+)["']/i);
+      if (match && match[1]) {
+        const url = match[1];
+        if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:image/")) {
+          onChange(name, url);
+          e.preventDefault();
+          return;
+        }
+      }
+    }
+
+    // 2. Si se pegó una URL de imagen directamente en formato texto plano
+    const text = e.clipboardData?.getData("text");
+    if (text && (text.startsWith("http://") || text.startsWith("https://") || text.startsWith("data:image/"))) {
+      onChange(name, text);
+      e.preventDefault();
+      return;
+    }
+
+    // 3. Fallback: Si es un archivo de imagen crudo (captura de pantalla, paint, etc.)
+    const items = e.clipboardData?.items;
+    if (items) {
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf("image") !== -1) {
+          const file = items[i].getAsFile();
+          if (file) {
+            processFile(file);
+            e.preventDefault();
+            return;
+          }
+        }
+      }
+    }
+  };
+
+  const handleClear = (e) => {
+    e.stopPropagation();
+    onChange(name, "");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  return (
+    <div className="flex flex-col">
+      <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
+        {label}
+      </label>
+      
+      <div
+        onPaste={handlePaste}
+        onClick={() => !value && fileInputRef.current?.click()}
+        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragOver(false);
+          const file = e.dataTransfer.files?.[0];
+          if (file) processFile(file);
+        }}
+        tabIndex={0}
+        className={`relative h-28 rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 ${
+          value 
+            ? "border-[#334155] bg-slate-950/40" 
+            : dragOver
+              ? "border-amber-500 bg-amber-500/5 text-amber-500" 
+              : "border-[#334155] bg-slate-900/40 hover:border-slate-600 hover:bg-slate-900/60 text-slate-400"
+        }`}
+      >
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          accept="image/*"
+          className="hidden"
+        />
+
+        {value ? (
+          <>
+            <img src={value} alt={label} className="w-full h-full object-contain p-2" />
+            <div className="absolute inset-0 bg-slate-950/80 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                className="p-1.5 bg-amber-500 rounded-lg text-slate-950 hover:bg-amber-400 transition-all shadow-md flex items-center justify-center cursor-pointer"
+                title="Cambiar imagen"
+              >
+                <span className="material-symbols-outlined text-sm">edit</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleClear}
+                className="p-1.5 bg-red-600 rounded-lg text-white hover:bg-red-500 transition-all shadow-md flex items-center justify-center cursor-pointer"
+                title="Eliminar imagen"
+              >
+                <span className="material-symbols-outlined text-sm">delete</span>
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="text-center p-2 flex flex-col items-center pointer-events-none">
+            <span className="material-symbols-outlined text-xl mb-0.5 text-slate-500">add_photo_alternate</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider block">Subir / Pegar</span>
+            <span className="text-[8px] text-slate-500 mt-0.5 block normal-case">Ctrl+V para pegar archivo o URL</span>
+          </div>
+        )}
+      </div>
+      
+      <input
+        type="text"
+        placeholder="O pegue URL aquí..."
+        value={value && value.startsWith("data:") ? "[Imagen cargada localmente]" : value}
+        disabled={value && value.startsWith("data:")}
+        onChange={(e) => onChange(name, e.target.value)}
+        className="mt-2 text-[10px] bg-slate-950/50 border border-[#334155]/60 rounded-lg px-2.5 py-1 text-slate-300 placeholder-slate-500 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
       />
     </div>
   );
@@ -97,6 +286,13 @@ export default function ProductFormModal({ producto, abierto, onCerrar }) {
     }));
   }
 
+  function handleImageChange(name, value) {
+    setForm((prev) => ({
+      ...prev,
+      [name]: value
+    }));
+  }
+
   function handleSubmit(e) {
     e.preventDefault();
     if (!form.descripcion || !form.codigo || !form.proveedorId) {
@@ -160,9 +356,9 @@ export default function ProductFormModal({ producto, abierto, onCerrar }) {
           </div>
 
           <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <InputField label="URL Imagen 1" name="imagenUrl" value={form.imagenUrl || ""} onChange={handleChange} placeholder="https://..." />
-            <InputField label="URL Imagen 2" name="imagenUrl2" value={form.imagenUrl2 || ""} onChange={handleChange} placeholder="https://..." />
-            <InputField label="URL Imagen 3" name="imagenUrl3" value={form.imagenUrl3 || ""} onChange={handleChange} placeholder="https://..." />
+            <ImagePicker label="Imagen 1" name="imagenUrl" value={form.imagenUrl || ""} onChange={handleImageChange} />
+            <ImagePicker label="Imagen 2" name="imagenUrl2" value={form.imagenUrl2 || ""} onChange={handleImageChange} />
+            <ImagePicker label="Imagen 3" name="imagenUrl3" value={form.imagenUrl3 || ""} onChange={handleImageChange} />
           </div>
 
           <div>

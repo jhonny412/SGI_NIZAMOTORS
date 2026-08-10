@@ -32,10 +32,9 @@ export default function Productos() {
   const [errorImagen, setErrorImagen] = useState("");
   const [indexImagen, setIndexImagen] = useState(0);
 
-  // Estados para drag en zoom
-  const [draggingImage, setDraggingImage] = useState(null);
-  const [imageOffset, setImageOffset] = useState({ x: 0, y: 0 });
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  // Estados para zoom en modal (sin lightbox)
+  const [zoomActive, setZoomActive] = useState(false);
+  const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
 
   const itemsPorPagina = 8;
   const API_URL = ENDPOINTS.IMAGE_SEARCH_API_URL;
@@ -73,15 +72,14 @@ export default function Productos() {
       setImagenResultado(null);
       setErrorImagen("");
       setIndexImagen(0);
-      setImageOffset({ x: 0, y: 0 });
-      setDraggingImage(null);
+      setZoomActive(false);
       return;
     }
     buscarImagen();
   }, [imagenModalProducto]);
 
   useEffect(() => {
-    setImageOffset({ x: 0, y: 0 });
+    setZoomActive(false);
   }, [indexImagen]);
 
   const categorias = useMemo(() => {
@@ -150,25 +148,16 @@ export default function Productos() {
     return { criticos, valorTotal, margen };
   }, [productos]);
 
-  const handleImageMouseDown = (e, imageType) => {
-    e.preventDefault();
-    setDraggingImage(imageType);
-    setDragStart({ x: e.clientX - imageOffset.x, y: e.clientY - imageOffset.y });
+  const handleZoomMouseMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setZoomPos({ x, y });
+    setZoomActive(true);
   };
 
-  const handleMouseMove = (e) => {
-    if (!draggingImage) return;
-    const newX = e.clientX - dragStart.x;
-    const newY = e.clientY - dragStart.y;
-    const maxOffset = 120;
-    setImageOffset({
-      x: Math.max(-maxOffset, Math.min(maxOffset, newX)),
-      y: Math.max(-maxOffset, Math.min(maxOffset, newY))
-    });
-  };
-
-  const handleMouseUp = () => {
-    setDraggingImage(null);
+  const handleZoomMouseLeave = () => {
+    setZoomActive(false);
   };
 
   const money = (n) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -394,13 +383,12 @@ export default function Productos() {
 
       <ProductFormModal producto={modalProducto && modalProducto.id ? modalProducto : null} abierto={modalProducto !== null} onCerrar={() => setModalProducto(null)} />
 
+
+
       {/* Modal Búsqueda de Imagen */}
       {imagenModalProducto && (
         <div
           className="modal-overlay"
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
         >
           <div className="modal-content max-w-2xl w-full !overflow-hidden flex flex-col max-h-[min(92vh,900px)]">
             <div className="shrink-0 flex items-start justify-between bg-slate-950 px-6 py-4 sm:py-5 rounded-t-2xl relative overflow-hidden border-b border-[#334155]">
@@ -446,18 +434,28 @@ export default function Productos() {
               ) : imagenResultado ? (
                 <div className="flex flex-col items-center gap-3 w-full">
                   <span className="text-[10px] font-bold uppercase tracking-wider bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-300 dark:ring-1 dark:ring-purple-800/40 px-2.5 py-0.5 rounded-lg shadow-sm">Resultado de búsqueda</span>
-                  <div className="w-full max-w-[500px] h-[min(42vh,320px)] flex items-center justify-center overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800/60 bg-white dark:bg-slate-950 shadow-inner">
+                  <div
+                    className="w-full max-w-[500px] h-[min(42vh,320px)] relative flex items-center justify-center overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800/60 bg-white dark:bg-slate-950 shadow-inner group cursor-zoom-in"
+                    onMouseMove={handleZoomMouseMove}
+                    onMouseLeave={handleZoomMouseLeave}
+                  >
                     <img
                       src={imagenResultado}
                       alt={imagenModalProducto.descripcion}
                       referrerPolicy="no-referrer"
-                      onMouseDown={(e) => handleImageMouseDown(e, 'resultado')}
                       style={{
-                        transform: `scale(${draggingImage === 'resultado' ? 2.5 : 1}) translate(${draggingImage === 'resultado' ? imageOffset.x : 0}px, ${draggingImage === 'resultado' ? imageOffset.y : 0}px)`,
-                        cursor: draggingImage === 'resultado' ? 'grabbing' : 'zoom-in'
+                        transform: zoomActive ? "scale(1.75)" : "scale(1)",
+                        transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`,
+                        transition: zoomActive ? "transform 0.05s ease-out" : "transform 0.15s ease-out",
                       }}
-                      className="max-w-full max-h-full object-contain transition-all shadow-md select-none"
+                      className="max-w-full max-h-full object-contain select-none pointer-events-none"
+                      draggable={false}
                     />
+                    {!zoomActive && (
+                      <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[9px] font-bold uppercase tracking-widest text-slate-400 bg-white/70 dark:bg-slate-950/80 px-2 py-0.5 rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+                        Pasa el cursor para ampliar
+                      </span>
+                    )}
                   </div>
                 </div>
               ) : (imagenModalProducto.imagenUrl || imagenModalProducto.imagenUrl2 || imagenModalProducto.imagenUrl3) ? (
@@ -471,18 +469,28 @@ export default function Productos() {
                         Imagen {indexImagen + 1} de {imgs.length} vinculada
                       </span>
 
-                      <div className="w-full max-w-[500px] h-[min(42vh,320px)] relative group flex items-center justify-center overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800/60 bg-white dark:bg-slate-950 shadow-inner">
+                      <div
+                        className="w-full max-w-[500px] h-[min(42vh,320px)] relative group flex items-center justify-center overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800/60 bg-white dark:bg-slate-950 shadow-inner cursor-zoom-in"
+                        onMouseMove={handleZoomMouseMove}
+                        onMouseLeave={handleZoomMouseLeave}
+                      >
                         <img
                           src={currentImg}
                           alt={`Imagen ${indexImagen + 1}`}
                           referrerPolicy="no-referrer"
-                          onMouseDown={(e) => handleImageMouseDown(e, 'vinculada')}
                           style={{
-                            transform: `scale(${draggingImage === 'vinculada' ? 2.5 : 1}) translate(${draggingImage === 'vinculada' ? imageOffset.x : 0}px, ${draggingImage === 'vinculada' ? imageOffset.y : 0}px)`,
-                            cursor: draggingImage === 'vinculada' ? 'grabbing' : 'zoom-in'
+                            transform: zoomActive ? "scale(1.75)" : "scale(1)",
+                            transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`,
+                            transition: zoomActive ? "transform 0.05s ease-out" : "transform 0.15s ease-out",
                           }}
-                          className="max-w-full max-h-full object-contain transition-all shadow-md select-none"
+                          className="max-w-full max-h-full object-contain select-none pointer-events-none"
+                          draggable={false}
                         />
+                        {!zoomActive && (
+                          <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 bg-white/70 dark:bg-slate-950/80 px-2 py-0.5 rounded-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+                            Pasa el cursor para ampliar
+                          </span>
+                        )}
 
                         {imgs.length > 1 && (
                           <>
