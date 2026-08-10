@@ -20,6 +20,7 @@ export const LOG_LEVELS = {
 // Caché de IP en memoria (para no leer localStorage en cada log)
 // ─────────────────────────────────────────────────────────────
 let _cachedIp = null;
+let _lastLogId = 0;
 
 // ─────────────────────────────────────────────────────────────
 // Utilidades de localStorage
@@ -182,10 +183,16 @@ export async function writeLog({ usuario = "Sistema", accion, modulo, detalles =
   // Obtener IP: usar caché si ya está resuelta, si no intentar resolver
   const ip = _cachedIp || await resolveClientIp();
 
+  let id = Date.now();
+  if (id <= _lastLogId) {
+    id = _lastLogId + 1;
+  }
+  _lastLogId = id;
+
   const logEntry = {
     sheet: "Logs",
     action: "create",
-    id: Date.now(),
+    id,
     fecha: new Date().toISOString(),
     usuario,
     accion,

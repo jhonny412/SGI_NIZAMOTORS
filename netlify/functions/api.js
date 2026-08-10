@@ -159,12 +159,23 @@ export async function handler(event, context) {
         const mappedValues = Object.values(payload).map(formatValue);
 
         const insertQuery = `INSERT INTO \`${tableName}\` (\`${keys.join("`, `")}\`) VALUES (${keys.map(() => "?").join(", ")})`;
-        const [insertResult] = await dbPool.execute(insertQuery, mappedValues);
         
-        // Devolvemos el registro recién creado
-        const createdId = payload.id || insertResult.insertId;
-        const [insertedRows] = await dbPool.query(`SELECT * FROM \`${tableName}\` WHERE id = ?`, [createdId]);
-        resultData = insertedRows[0];
+        try {
+          const [insertResult] = await dbPool.execute(insertQuery, mappedValues);
+          
+          // Devolvemos el registro recién creado
+          const createdId = payload.id || insertResult.insertId;
+          const [insertedRows] = await dbPool.query(`SELECT * FROM \`${tableName}\` WHERE id = ?`, [createdId]);
+          resultData = insertedRows[0];
+        } catch (dbError) {
+          if (dbError.code === 'ER_DUP_ENTRY' && tableName === 'logs' && payload.id) {
+            console.log(`[API] Log ID ${payload.id} ya existe, omitiendo inserción.`);
+            const [existingRows] = await dbPool.query(`SELECT * FROM \`${tableName}\` WHERE id = ?`, [payload.id]);
+            resultData = existingRows[0] || payload;
+          } else {
+            throw dbError;
+          }
+        }
 
       } else if (currentAction === "edit") {
         const { id, ...updateFields } = payload;

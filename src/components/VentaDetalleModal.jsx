@@ -196,7 +196,7 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
 
                 <div className="flex items-start gap-2.5">
                   <span className="text-slate-500 w-24 font-semibold shrink-0">Método de Pago:</span>
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-sky-950/40 text-sky-400 border border-sky-850/20">
+                  <span className="badge-info">
                     {t(`sale.${venta.metodoPago.toLowerCase()}`, { defaultValue: venta.metodoPago })}
                   </span>
                 </div>
@@ -265,7 +265,7 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
                           {item.cantidad} u.
                         </span>
                       </td>
-                      <td className="px-4 py-3.5 text-right text-xs font-medium text-slate-405 font-mono">
+                      <td className="px-4 py-3.5 text-right text-xs font-medium text-slate-400 font-mono">
                         S/. {item.precioUnitario.toFixed(2)}
                       </td>
                       <td className="px-4 py-3.5 text-right text-xs font-black text-slate-200 font-mono">
@@ -434,42 +434,15 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
           ¡GRACIAS POR SU COMPRA!
         </div>
 
-        {/* Barcode SVG */}
-        <div className="mt-3 text-center">
-          <svg className="w-44 h-9 mx-auto text-black fill-current" viewBox="0 0 100 20" fill="currentColor">
-            <rect x="0" y="0" width="2" height="20" />
-            <rect x="3" y="0" width="1" height="20" />
-            <rect x="5" y="0" width="3" height="20" />
-            <rect x="9" y="0" width="1" height="20" />
-            <rect x="11" y="0" width="2" height="20" />
-            <rect x="15" y="0" width="1" height="20" />
-            <rect x="17" y="0" width="4" height="20" />
-            <rect x="22" y="0" width="2" height="20" />
-            <rect x="25" y="0" width="1" height="20" />
-            <rect x="27" y="0" width="3" height="20" />
-            <rect x="31" y="0" width="1" height="20" />
-            <rect x="33" y="0" width="2" height="20" />
-            <rect x="36" y="0" width="4" height="20" />
-            <rect x="41" y="0" width="1" height="20" />
-            <rect x="43" y="0" width="2" height="20" />
-            <rect x="46" y="0" width="3" height="20" />
-            <rect x="50" y="0" width="1" height="20" />
-            <rect x="52" y="0" width="2" height="20" />
-            <rect x="55" y="0" width="4" height="20" />
-            <rect x="60" y="0" width="1" height="20" />
-            <rect x="62" y="0" width="3" height="20" />
-            <rect x="66" y="0" width="2" height="20" />
-            <rect x="69" y="0" width="1" height="20" />
-            <rect x="71" y="0" width="4" height="20" />
-            <rect x="76" y="0" width="2" height="20" />
-            <rect x="79" y="0" width="1" height="20" />
-            <rect x="81" y="0" width="3" height="20" />
-            <rect x="85" y="0" width="1" height="20" />
-            <rect x="87" y="0" width="2" height="20" />
-            <rect x="90" y="0" width="4" height="20" />
-            <rect x="95" y="0" width="1" height="20" />
-            <rect x="97" y="0" width="3" height="20" />
-          </svg>
+        {/* QR Code */}
+        <div className="mt-3 text-center flex flex-col items-center justify-center">
+          <img 
+            src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(
+              `Boleta: ${venta.boleta || `LEGACY-${venta.id}`}\nFecha: ${formatFecha(venta.fecha)}\nCliente: ${clientInfo.nombre}\nTotal: S/. ${total.toFixed(2)}`
+            )}`}
+            alt="QR Code Comprobante"
+            className="w-24 h-24 mx-auto border border-slate-200 p-1 bg-white"
+          />
           <div className="text-[8px] font-mono mt-1.5 tracking-[3px] text-black uppercase select-none">
             {venta.boleta ? venta.boleta.replace("BOLETA ", "") : `LEGACY-${venta.id}`}
           </div>
