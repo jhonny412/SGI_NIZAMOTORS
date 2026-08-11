@@ -183,8 +183,8 @@
   }
 
   .theme-toggle {
-    @apply inline-flex h-10 w-10 items-center justify-center rounded-xl border bg-slate-900 text-slate-300 shadow-sm
-      transition-all duration-150 hover:bg-slate-800 hover:text-white focus:outline-none focus:ring-4 focus:ring-amber-500/10 cursor-pointer;
+    @apply inline-flex h-10 w-10 items-center justify-center rounded-xl border bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 shadow-xs
+      transition-all duration-150 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white focus:outline-none focus:ring-4 focus:ring-amber-500/10 cursor-pointer;
     border-color: var(--border);
   }
 
@@ -370,7 +370,7 @@
 }
 
 .material-symbols-outlined {
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 20;
   vertical-align: middle;
 }
 

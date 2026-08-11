@@ -1,9 +1,10 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useInventory } from "../context/useInventory";
 import { useTranslation, Trans } from "react-i18next";
 import { SkeletonCard, SkeletonTable } from "../components/Skeleton";
 import VentaFormModal from "../components/VentaFormModal";
 import VentaDetalleModal from "../components/VentaDetalleModal";
+import ImprimirConfirmModal from "../components/ImprimirConfirmModal";
 import SortableTh from "../components/SortableTh";
 import Pagination from "../components/Pagination";
 import { matchSearch } from "../utils/search";
@@ -15,11 +16,17 @@ export default function Ventas() {
   const [busqueda, setBusqueda] = useState("");
   const [pagina, setPagina] = useState(1);
   const [orden, setOrden] = useState({ campo: "id", dir: "desc" });
+  // Modal: Formulario de nueva venta
   const [modalAbierto, setModalAbierto] = useState(false);
+  // Modal: Detalle / comprobante
   const [detalleVenta, setDetalleVenta] = useState(null);
   const [modalDetalleAbierto, setModalDetalleAbierto] = useState(false);
-  const [autoPrintBoleta, setAutoPrintBoleta] = useState(null);
   const [autoImprimirDetalle, setAutoImprimirDetalle] = useState(false);
+  // Modal: Confirmación de impresión post-venta
+  const [confirmImprimirAbierto, setConfirmImprimirAbierto] = useState(false);
+  const [confirmBoletaCode, setConfirmBoletaCode] = useState(null);
+  // Boleta pendiente de búsqueda en salesGrouped
+  const [pendingBoletaCode, setPendingBoletaCode] = useState(null);
   const itemsPorPagina = 8;
 
   // Agrupar y enriquecer ventas (base de datos)
@@ -47,18 +54,49 @@ export default function Ventas() {
     });
   }, [ventas, productos]);
 
-  // Auto-detect newly registered sales to trigger print layout instantly
+  // Cierra todos los modales y limpia el estado
+  const closeAll = useCallback(() => {
+    setModalAbierto(false);
+    setModalDetalleAbierto(false);
+    setDetalleVenta(null);
+    setAutoImprimirDetalle(false);
+    setConfirmImprimirAbierto(false);
+    setConfirmBoletaCode(null);
+    setPendingBoletaCode(null);
+  }, []);
+
+  // Cuando se registra una venta: guarda el código y espera que salesGrouped se actualice
+  const handleVentaRegistrada = useCallback((boletaCode) => {
+    setModalAbierto(false);          // cierra el formulario de venta
+    setPendingBoletaCode(boletaCode);
+    setConfirmBoletaCode(boletaCode);
+    setConfirmImprimirAbierto(true); // muestra el modal de confirmación
+  }, []);
+
+  // Cuando salesGrouped se actualiza, busca la venta recién registrada
   useEffect(() => {
-    if (autoPrintBoleta) {
-      const group = salesGrouped.find((g) => g.boleta === autoPrintBoleta);
+    if (pendingBoletaCode) {
+      const group = salesGrouped.find((g) => g.boleta === pendingBoletaCode);
       if (group) {
-        setDetalleVenta(group);
-        setModalDetalleAbierto(true);
-        setAutoImprimirDetalle(true);
-        setAutoPrintBoleta(null); // Reset trigger
+        setDetalleVenta(group);     // precarga el detalle para poder imprimir
+        setPendingBoletaCode(null); // ya encontrado
       }
     }
-  }, [salesGrouped, autoPrintBoleta]);
+  }, [salesGrouped, pendingBoletaCode]);
+
+  // Acción: usuario confirma que quiere imprimir
+  const handleConfirmImprimir = useCallback(() => {
+    setConfirmImprimirAbierto(false);
+    setConfirmBoletaCode(null);
+    // Abre el modal de detalle con autoImprimir activado
+    setAutoImprimirDetalle(true);
+    setModalDetalleAbierto(true);
+  }, []);
+
+  // Acción: usuario omite la impresión
+  const handleOmitirImprimir = useCallback(() => {
+    closeAll();
+  }, [closeAll]);
 
   // Filtrar y ordenar las ventas agrupadas
   const filtrados = useMemo(() => {
@@ -357,16 +395,18 @@ export default function Ventas() {
                         S/. {s.utilidad.toFixed(2)}
                       </td>
                       <td className="px-5 py-4 text-center">
-                        <button
-                          onClick={() => {
-                            setDetalleVenta(s);
-                            setModalDetalleAbierto(true);
-                          }}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-amber-500/10 text-slate-300 hover:text-amber-500 border border-[#334155] transition-all text-xs font-bold cursor-pointer"
-                        >
-                          <span className="material-symbols-outlined text-base">visibility</span>
-                          <span>{t("pages.productos.actions.view")}</span>
-                        </button>
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => {
+                              setDetalleVenta(s);
+                              setModalDetalleAbierto(true);
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-amber-500/10 text-slate-300 hover:text-amber-500 border border-[#334155] transition-all text-xs font-bold cursor-pointer"
+                          >
+                            <span className="material-symbols-outlined text-base">visibility</span>
+                            <span>{t("pages.productos.actions.view")}</span>
+                           </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -402,18 +442,22 @@ export default function Ventas() {
       <VentaFormModal
         abierto={modalAbierto}
         onCerrar={() => setModalAbierto(false)}
-        onVentaRegistrada={(boletaCode) => setAutoPrintBoleta(boletaCode)}
+        onVentaRegistrada={handleVentaRegistrada}
+      />
+
+      {/* Confirmación de impresión post-venta */}
+      <ImprimirConfirmModal
+        abierto={confirmImprimirAbierto}
+        boletaCode={confirmBoletaCode}
+        onImprimir={handleConfirmImprimir}
+        onOmitir={handleOmitirImprimir}
       />
 
       {/* Sale Detail Modal */}
       <VentaDetalleModal
         abierto={modalDetalleAbierto}
         venta={detalleVenta}
-        onCerrar={() => {
-          setModalDetalleAbierto(false);
-          setDetalleVenta(null);
-          setAutoImprimirDetalle(false);
-        }}
+        onCerrar={closeAll}
         formatFecha={formatFecha}
         autoImprimir={autoImprimirDetalle}
       />

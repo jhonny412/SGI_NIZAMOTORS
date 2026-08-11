@@ -31,7 +31,12 @@
     "inicio": "Inicio",
     "comercial": "Comercial",
     "inventario": "Inventario",
-    "compras": "Compras"
+    "compras": "Compras",
+    "reportes": "Reportes",
+    "reporte_ventas": "Ventas",
+    "reporte_ingresos": "Ingresos",
+    "reporte_salidas": "Salidas",
+    "reporte_kardex": "Kardex"
   },
   "pages": {
     "dashboard": {
@@ -250,6 +255,75 @@
       "no_sales": "No se encontraron ventas registradas.",
       "pagination": {
         "showing": "Mostrando <bold>{{count}}</bold> de <bold>{{total}}</bold> ventas"
+      }
+    },
+    "reportes": {
+      "subtitle": "Selecciona el rango de fechas y genera el reporte en PDF.",
+      "generate_pdf": "Generar PDF",
+      "date_from": "Desde",
+      "date_to": "Hasta",
+      "date_range": "Rango de fechas",
+      "clear_filters": "Limpiar",
+      "records": "Registros",
+      "total_sales": "Total ventas",
+      "total_qty": "Cantidad total",
+      "total_profit": "Utilidad total",
+      "no_results": "No hay registros en el rango seleccionado.",
+      "date_required_title": "Fechas requeridas",
+      "date_required_text": "Debes seleccionar la fecha de inicio y fin del reporte.",
+      "date_invalid_title": "Rango inválido",
+      "date_invalid_text": "La fecha de inicio no puede ser posterior a la fecha de fin.",
+      "no_data_title": "Sin datos",
+      "no_data_text": "No hay registros en el rango seleccionado para generar el PDF.",
+      "presets": {
+        "today": "Hoy",
+        "yesterday": "Ayer",
+        "last7": "Últimos 7 días",
+        "last15": "Últimos 15 días",
+        "last30": "Últimos 30 días",
+        "thisMonth": "Este mes",
+        "thisYear": "Este año"
+      },
+      "filters": {
+        "title": "Filtros adicionales",
+        "all": "Todos",
+        "payment_method": "Método de pago",
+        "client": "Cliente",
+        "client_placeholder": "Buscar por nombre de cliente...",
+        "product": "Producto",
+        "product_placeholder": "Buscar por descripción o código...",
+        "reason": "Motivo",
+        "reason_placeholder": "Buscar por motivo..."
+      },
+      "preview_title": "Vista previa del reporte",
+      "preview_subtitle": "Revisa el documento antes de descargarlo",
+      "download_pdf": "Descargar PDF",
+      "close_preview": "Cerrar vista previa",
+      "ventas": {
+        "title": "Reporte de Ventas"
+      },
+      "ingresos": {
+        "title": "Reporte de Ingresos"
+      },
+      "salidas": {
+        "title": "Reporte de Salidas"
+      },
+      "kardex": {
+        "title": "Reporte de Kardex"
+      },
+      "table": {
+        "date": "Fecha",
+        "receipt": "Boleta",
+        "client": "Cliente",
+        "items": "Items",
+        "total": "Total",
+        "profit": "Utilidad",
+        "product": "Producto",
+        "code": "Código",
+        "qty": "Cantidad",
+        "reason": "Motivo",
+        "stock_prev": "Stock ant.",
+        "stock_new": "Stock nuevo"
       }
     }
   },

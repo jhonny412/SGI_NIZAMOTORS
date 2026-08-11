@@ -345,10 +345,10 @@ export function InventoryProvider({ children }) {
       setVentas(prev => [res.nuevaVenta, ...prev]);
       setMovimientos(prev => [...res.nuevosMovimientos.reverse(), ...prev]);
       setProductos(res.productosActualizados);
-      Swal.fire({
+      await Swal.fire({
         icon: "success", title: "Venta registrada",
         text: `Boleta: ${venta.boleta} registrada exitosamente — S/. ${venta.totalVenta.toFixed(2)}`,
-        timer: 2500, showConfirmButton: false
+        timer: 2000, showConfirmButton: false
       });
       return true;
     } catch (err) {
@@ -384,6 +384,43 @@ export function InventoryProvider({ children }) {
     return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
   }, []);
 
+  // ELIMINAR VENTA (BOTÓN TEMPORAL DE PRUEBAS)
+  const eliminarVenta = (id) => {
+    const venta = ventas.find((v) => Number(v.id) === Number(id));
+    Swal.fire({
+      title: "¿Eliminar venta?",
+      text: "Esta acción eliminará el registro de la venta y revertirá el stock de los productos. (Modo pruebas)",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar"
+    }).then(async (res) => {
+      if (res.isConfirmed) {
+        try {
+          if (venta && venta.items) {
+            // Revertir stock de los productos
+            setProductos((prevProds) =>
+              prevProds.map((prod) => {
+                const item = venta.items.find((i) => Number(i.productoId) === Number(prod.id));
+                if (item) {
+                  return { ...prod, stock: prod.stock + (Number(item.cantidad) || 0) };
+                }
+                return prod;
+              })
+            );
+          }
+          await invService.deleteSaleApi(id, venta, productos, usuarioActivo);
+          setVentas((prev) => prev.filter((v) => Number(v.id) !== Number(id)));
+          Swal.fire({ icon: "success", title: "Venta eliminada", timer: 1500, showConfirmButton: false });
+        } catch {
+          Swal.fire({ icon: "error", title: "Error", text: "No se pudo eliminar la venta." });
+        }
+      }
+    });
+  };
+
   const value = {
     productos: productosConProveedor, proveedores, movimientos,
     agregarProducto, editarProducto, eliminarProducto,
@@ -391,7 +428,7 @@ export function InventoryProvider({ children }) {
     registrarMovimiento, getKardex, getProveedorNombre, totalProductos, valorInventario, valorVentaInventario,
     stockBajo, stockAgotado, totalMovimientos, ultimosMovimientos, cargando, traslados, tiendasVecinas,
     agregarTraslado, resolverTraslado, categorias, agregarCategoria, editarCategoria, eliminarCategoria,
-    formatFecha, ventas, agregarVenta
+    formatFecha, ventas, agregarVenta, eliminarVenta
   };
 
 

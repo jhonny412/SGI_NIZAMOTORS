@@ -495,9 +495,10 @@ export async function createSale(venta, currentProducts, currentMovements, curre
     return updatedProd;
   });
 
-  // Sync with Google Sheets (awaited — errors propagate to caller which shows error alert)
+  // Exclude 'vendedor' — column does not exist in DB; kept only in local state for receipts
+  const { vendedor: _vendedor, ...ventaParaDB } = nuevaVenta;
   await postAction("Ventas", "create", {
-    ...nuevaVenta,
+    ...ventaParaDB,
     items: JSON.stringify(nuevaVenta.items)
   });
 
@@ -527,3 +528,19 @@ export async function createSale(venta, currentProducts, currentMovements, curre
 
   return { nuevaVenta, nuevosMovimientos, productosActualizados };
 }
+
+export async function deleteSaleApi(id, sale, currentProducts, userActive) {
+  try {
+    await postAction("Ventas", "delete", { id });
+  } catch (e) {
+    console.warn("Could not delete sale from backend/sheets", e);
+  }
+
+  writeLog({
+    usuario: userActive?.nombre || "Sistema",
+    accion: "Eliminar Venta (Prueba)",
+    modulo: "Ventas",
+    detalles: `ID Venta: ${id}, Boleta: ${sale?.boleta || ''}`
+  });
+}
+

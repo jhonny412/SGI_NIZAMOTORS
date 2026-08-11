@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useInventory } from "../context/useInventory";
+import { useAuth } from "../context/useAuth";
 import { useTranslation } from "react-i18next";
 import Swal from "sweetalert2";
 
 export default function VentaFormModal({ abierto, onCerrar, onVentaRegistrada }) {
   const { productos, movimientos, ventas, agregarVenta } = useInventory();
+  const { usuarioActivo } = useAuth();
   const { t } = useTranslation();
 
   // Datos del Cliente y Facturación
@@ -273,6 +275,7 @@ export default function VentaFormModal({ abierto, onCerrar, onVentaRegistrada })
       utilidad: utilidadCalculada,
       cantidadTotal: cantidadCalculada,
       direccion: finalDir,
+      vendedor: usuarioActivo?.nombre || "ADMIN SGI",
       items: saleItems
     };
 

@@ -1,26 +1,109 @@
+import { useMemo, useState } from "react";
 import { useInventory } from "../context/useInventory";
 import { useAuth } from "../context/useAuth";
 import { useUI } from "../context/useUI";
 import { useTranslation } from "react-i18next";
 import { SkeletonCard, SkeletonTable } from "../components/Skeleton";
 
+const DIA_LABELS = ["LUN", "MAR", "MIE", "JUE", "VIE", "SAB", "DOM"];
+
+function getDateOnly(fecha) {
+  if (!fecha) return "";
+  return fecha.includes("T") ? fecha.split("T")[0] : fecha;
+}
+
+function formatDateLocal(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function getCurrentWeekDays() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const dayOfWeek = today.getDay();
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  const monday = new Date(today);
+  monday.setDate(today.getDate() + mondayOffset);
+
+  return DIA_LABELS.map((label, i) => {
+    const date = new Date(monday);
+    date.setDate(monday.getDate() + i);
+    return { label, startStr: formatDateLocal(date), endStr: formatDateLocal(date) };
+  });
+}
+
+function getCurrentMonthWeeks() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  const weeks = [];
+  let weekStart = 1;
+
+  while (weekStart <= lastDay) {
+    const weekEnd = Math.min(weekStart + 6, lastDay);
+    weeks.push({
+      label: weekStart === weekEnd ? `${weekStart}` : `${weekStart}-${weekEnd}`,
+      startStr: formatDateLocal(new Date(year, month, weekStart)),
+      endStr: formatDateLocal(new Date(year, month, weekEnd)),
+    });
+    weekStart = weekEnd + 1;
+  }
+
+  return weeks;
+}
+
+function isDateInRange(dateStr, startStr, endStr) {
+  return dateStr >= startStr && dateStr <= endStr;
+}
+
+function buildFlowData(periods, movimientos) {
+  const data = periods.map(({ label, startStr, endStr }) => {
+    const entradas = movimientos
+      .filter((m) => isDateInRange(getDateOnly(m.fecha), startStr, endStr) && m.tipo === "entrada")
+      .reduce((sum, m) => sum + m.cantidad, 0);
+    const salidas = movimientos
+      .filter((m) => isDateInRange(getDateOnly(m.fecha), startStr, endStr) && m.tipo === "salida")
+      .reduce((sum, m) => sum + m.cantidad, 0);
+    return { label, key: `${startStr}-${endStr}`, entradas, salidas };
+  });
+
+  const maxVal = Math.max(...data.flatMap((d) => [d.entradas, d.salidas]), 1);
+  return data.map((d) => ({
+    ...d,
+    entradasPct: (d.entradas / maxVal) * 100,
+    salidasPct: (d.salidas / maxVal) * 100,
+  }));
+}
+
 export default function Dashboard() {
   const {
     totalProductos, valorInventario, valorVentaInventario,
     stockBajo, stockAgotado,
-    cargando, ventas
+    cargando, ventas, movimientos
   } = useInventory();
   const { setPaginaActiva } = useUI();
   const { usuarioActivo } = useAuth();
   const { t } = useTranslation();
   const esAdmin = usuarioActivo?.rol?.toLowerCase() === "admin";
-
+  const [periodoFlujo, setPeriodoFlujo] = useState("semana");
 
   // Alert count
   const alertCount = stockBajo.length + stockAgotado.length;
   
   // Get critical items to display
   const criticalItems = [...stockAgotado, ...stockBajo].slice(0, 4);
+
+  const flowData = useMemo(() => {
+    const periods = periodoFlujo === "semana" ? getCurrentWeekDays() : getCurrentMonthWeeks();
+    return buildFlowData(periods, movimientos);
+  }, [movimientos, periodoFlujo]);
+
+  const periodoFlujoLabel = periodoFlujo === "semana" ? "Semana actual" : "Mes actual";
+  const btnActivo = "px-3 py-1 bg-amber-500 text-slate-950 rounded-full text-[10px] font-black uppercase tracking-wider transition-all";
+  const btnInactivo = "px-3 py-1 bg-slate-800 border border-[#334155] rounded-full text-[10px] font-bold text-slate-300 hover:text-white transition-all uppercase tracking-wider";
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -121,71 +204,54 @@ export default function Dashboard() {
           <div className="flex justify-between items-center mb-6">
             <div>
               <h4 className="text-base font-black text-slate-200">Flujo de Inventario</h4>
-              <p className="text-xs text-slate-400">Entradas vs Salidas (Simulación semanal)</p>
+              <p className="text-xs text-slate-400">Entradas vs Salidas ({periodoFlujoLabel})</p>
             </div>
             <div className="flex gap-2">
-              <button className="px-3 py-1 bg-amber-500 text-slate-950 rounded-full text-[10px] font-black uppercase tracking-wider transition-all">Semana</button>
-              <button className="px-3 py-1 bg-slate-800 border border-[#334155] rounded-full text-[10px] font-bold text-slate-300 hover:text-white transition-all uppercase tracking-wider">Mes</button>
+              <button
+                type="button"
+                onClick={() => setPeriodoFlujo("semana")}
+                className={periodoFlujo === "semana" ? btnActivo : btnInactivo}
+              >
+                Semana
+              </button>
+              <button
+                type="button"
+                onClick={() => setPeriodoFlujo("mes")}
+                className={periodoFlujo === "mes" ? btnActivo : btnInactivo}
+              >
+                Mes
+              </button>
             </div>
           </div>
 
           <div className="flex items-end gap-4 min-h-[200px] pt-4 px-2">
-            {/* Monday */}
-            <div className="flex-1 flex flex-col items-center gap-2 group">
-              <div className="w-full flex gap-1 items-end h-[160px]">
-                <div className="bg-slate-700/40 w-full rounded-t border-x border-t border-slate-700/60" style={{ height: "40%" }}></div>
-                <div className="bg-amber-500 w-full rounded-t led-glow" style={{ height: "60%" }}></div>
+            {flowData.map(({ label, key, entradas, salidas, entradasPct, salidasPct }) => (
+              <div key={key} className="flex-1 flex flex-col items-center gap-2">
+                <div className="w-full flex gap-1 items-end h-[160px]">
+                  <div className="relative flex-1 group/bar h-full flex items-end">
+                    <div
+                      className="bg-slate-700/40 w-full rounded-t border-x border-t border-slate-700/60 cursor-default transition-all group-hover/bar:bg-slate-600/60"
+                      style={{ height: `${salidas > 0 ? Math.max(salidasPct, 4) : 2}%` }}
+                    />
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-slate-950 border border-slate-700 rounded-md shadow-lg whitespace-nowrap opacity-0 group-hover/bar:opacity-100 pointer-events-none transition-opacity z-20">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Salidas</p>
+                      <p className="text-xs font-black text-slate-100">{salidas} <span className="text-[9px] font-bold text-slate-400">items</span></p>
+                    </div>
+                  </div>
+                  <div className="relative flex-1 group/bar h-full flex items-end">
+                    <div
+                      className="bg-amber-500 w-full rounded-t led-glow cursor-default transition-all group-hover/bar:brightness-110"
+                      style={{ height: `${entradas > 0 ? Math.max(entradasPct, 4) : 2}%` }}
+                    />
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-slate-950 border border-amber-500/30 rounded-md shadow-lg whitespace-nowrap opacity-0 group-hover/bar:opacity-100 pointer-events-none transition-opacity z-20">
+                      <p className="text-[9px] font-black text-amber-500/80 uppercase tracking-wider">Entradas</p>
+                      <p className="text-xs font-black text-amber-500">{entradas} <span className="text-[9px] font-bold text-amber-500/60">items</span></p>
+                    </div>
+                  </div>
+                </div>
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{label}</span>
               </div>
-              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">LUN</span>
-            </div>
-            {/* Tuesday */}
-            <div className="flex-1 flex flex-col items-center gap-2 group">
-              <div className="w-full flex gap-1 items-end h-[160px]">
-                <div className="bg-slate-700/40 w-full rounded-t border-x border-t border-slate-700/60" style={{ height: "55%" }}></div>
-                <div className="bg-amber-500 w-full rounded-t led-glow" style={{ height: "45%" }}></div>
-              </div>
-              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">MAR</span>
-            </div>
-            {/* Wednesday */}
-            <div className="flex-1 flex flex-col items-center gap-2 group">
-              <div className="w-full flex gap-1 items-end h-[160px]">
-                <div className="bg-slate-700/40 w-full rounded-t border-x border-t border-slate-700/60" style={{ height: "30%" }}></div>
-                <div className="bg-amber-500 w-full rounded-t led-glow" style={{ height: "80%" }}></div>
-              </div>
-              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">MIE</span>
-            </div>
-            {/* Thursday */}
-            <div className="flex-1 flex flex-col items-center gap-2 group">
-              <div className="w-full flex gap-1 items-end h-[160px]">
-                <div className="bg-slate-700/40 w-full rounded-t border-x border-t border-slate-700/60" style={{ height: "70%" }}></div>
-                <div className="bg-amber-500 w-full rounded-t led-glow" style={{ height: "65%" }}></div>
-              </div>
-              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">JUE</span>
-            </div>
-            {/* Friday */}
-            <div className="flex-1 flex flex-col items-center gap-2 group">
-              <div className="w-full flex gap-1 items-end h-[160px]">
-                <div className="bg-slate-700/40 w-full rounded-t border-x border-t border-slate-700/60" style={{ height: "45%" }}></div>
-                <div className="bg-amber-500 w-full rounded-t led-glow" style={{ height: "90%" }}></div>
-              </div>
-              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">VIE</span>
-            </div>
-            {/* Saturday */}
-            <div className="flex-1 flex flex-col items-center gap-2 group">
-              <div className="w-full flex gap-1 items-end h-[160px]">
-                <div className="bg-slate-700/40 w-full rounded-t border-x border-t border-slate-700/60" style={{ height: "20%" }}></div>
-                <div className="bg-amber-500 w-full rounded-t led-glow" style={{ height: "30%" }}></div>
-              </div>
-              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">SAB</span>
-            </div>
-            {/* Sunday */}
-            <div className="flex-1 flex flex-col items-center gap-2 group">
-              <div className="w-full flex gap-1 items-end h-[160px]">
-                <div className="bg-slate-700/40 w-full rounded-t border-x border-t border-slate-700/60" style={{ height: "10%" }}></div>
-                <div className="bg-amber-500 w-full rounded-t led-glow" style={{ height: "15%" }}></div>
-              </div>
-              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">DOM</span>
-            </div>
+            ))}
           </div>
 
           <div className="mt-6 flex gap-6 justify-center border-t border-[#334155]/60 pt-4">

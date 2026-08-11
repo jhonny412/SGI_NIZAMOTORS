@@ -1,12 +1,15 @@
 import { useState, useMemo } from "react";
 import { useInventory } from "../context/useInventory";
+import { useAuth } from "../context/useAuth";
 import { useTranslation, Trans } from "react-i18next";
 import { SkeletonTable } from "../components/Skeleton";
 import SortableTh from "../components/SortableTh";
 import Pagination from "../components/Pagination";
+import { generateKardexPdf } from "../utils/reportPdf";
 
 export default function Kardex() {
   const { movimientos, productos, cargando, formatFecha } = useInventory();
+  const { usuarioActivo } = useAuth();
   const { t } = useTranslation();
   const [productoId, setProductoId] = useState("");
   const [filtroTipo, setFiltroTipo] = useState("todos");
@@ -99,6 +102,23 @@ export default function Kardex() {
           <h2 className="text-3xl font-black text-slate-100 tracking-tight">{t("pages.kardex.title")}</h2>
           <p className="text-slate-400 font-medium">Control detallado y trazabilidad total de entradas y salidas de repuestos.</p>
         </div>
+        <button
+          type="button"
+          onClick={() =>
+            generateKardexPdf({
+              movimientos: kardexFiltrado,
+              productos,
+              fechaDesde,
+              fechaHasta,
+              formatFecha,
+              usuario: usuarioActivo?.nombre || "Administrador",
+            })
+          }
+          className="btn-primary flex items-center gap-2 cursor-pointer"
+        >
+          <span className="material-symbols-outlined text-lg">picture_as_pdf</span>
+          Exportar PDF
+        </button>
       </div>
 
       {/* Filter Section (Glass Card Style) */}
