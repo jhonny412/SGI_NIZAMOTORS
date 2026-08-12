@@ -403,6 +403,9 @@ export default function Sidebar() {
                 </span>
               </div>
               <p className="mt-1 text-xs font-semibold text-slate-700 dark:text-slate-300">{t("common.synced")}</p>
+              <div className="mt-2 pt-2 border-t border-slate-200/60 dark:border-slate-800/80 text-[10px] text-center font-bold tracking-wider text-slate-500 dark:text-slate-400 uppercase flex items-center justify-center gap-1">
+                <span>Desarrollado por:</span> <a href="https://www.solbinx.com" target="_blank" rel="noopener noreferrer" className="text-amber-600 dark:text-amber-400 font-extrabold tracking-widest hover:underline">www.solbinx.com</a>
+              </div>
             </div>
           </div>
         </div>

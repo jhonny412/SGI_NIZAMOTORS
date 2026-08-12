@@ -417,9 +417,12 @@ export default function Dashboard() {
       </div>
 
       {/* Footer Details */}
-      <footer className="mt-8 border-t border-[#334155]/30 pt-4 flex flex-col gap-3 md:flex-row md:justify-between md:items-center text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">
-        <p>© 2026 NIZA MOTORS • MIDNIGHT CHROME MANAGEMENT SYSTEM</p>
-        <div className="flex gap-4">
+      <footer className="mt-8 border-t border-[#334155]/30 pt-4 grid grid-cols-1 md:grid-cols-3 gap-3 items-center text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">
+        <p className="text-left">© 2026 NIZA MOTORS • MIDNIGHT CHROME MANAGEMENT SYSTEM</p>
+        <div className="text-center text-amber-600 dark:text-amber-500 font-extrabold tracking-widest">
+          DESARROLLADO POR: <a href="https://www.solbinx.com" target="_blank" rel="noopener noreferrer" className="hover:underline">www.solbinx.com</a>
+        </div>
+        <div className="flex md:justify-end gap-4">
           <span className="text-amber-500/80">VERSIÓN 2.4.0-STABLE</span>
           <span>SERVIDOR: CLOUD-AUTO-01</span>
         </div>
