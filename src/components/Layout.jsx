@@ -1,6 +1,5 @@
 import Sidebar from "./Sidebar";
 import LanguageSwitcher from "./LanguageSwitcher";
-import { useInventory } from "../context/useInventory";
 import { useAuth } from "../context/useAuth";
 import { useUI } from "../context/useUI";
 import { useTranslation } from "react-i18next";

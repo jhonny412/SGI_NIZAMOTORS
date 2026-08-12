@@ -1,14 +1,21 @@
-import Dashboard from "../pages/Dashboard";
-import Productos from "../pages/Productos";
-import Ventas from "../pages/Ventas";
-import Movimientos from "../pages/Movimientos";
-import Kardex from "../pages/Kardex";
-import Proveedores from "../pages/Proveedores";
-import Marcas from "../pages/Marcas";
-import Categorias from "../pages/Categorias";
-import Creditos from "../pages/Creditos";
-import Auditoria from "../pages/Auditoria";
-import ReportePage from "../pages/ReportePage";
+import { lazy } from "react";
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Lazy-loaded page components — cada página se descarga como chunk separado
+// solo cuando el usuario la visita por primera vez (Code Splitting).
+// El fallback de Suspense se define en App.jsx.
+// ──────────────────────────────────────────────────────────────────────────────
+const Dashboard    = lazy(() => import("../pages/Dashboard"));
+const Productos    = lazy(() => import("../pages/Productos"));
+const Ventas       = lazy(() => import("../pages/Ventas"));
+const Movimientos  = lazy(() => import("../pages/Movimientos"));
+const Kardex       = lazy(() => import("../pages/Kardex"));
+const Proveedores  = lazy(() => import("../pages/Proveedores"));
+const Marcas       = lazy(() => import("../pages/Marcas"));
+const Categorias   = lazy(() => import("../pages/Categorias"));
+const Creditos     = lazy(() => import("../pages/Creditos"));
+const Auditoria    = lazy(() => import("../pages/Auditoria"));
+const ReportePage  = lazy(() => import("../pages/ReportePage"));
 
 
 /**
@@ -182,4 +189,3 @@ export const ROUTES = {
     groupColor: "text-purple-500 dark:text-purple-400"
   },
 };
-

@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
 import { useInventory } from "../context/useInventory";
-import { useTranslation, Trans } from "react-i18next";
 import { SkeletonTable } from "../components/Skeleton";
 import { fetchSheet } from "../services/api";
 import Pagination from "../components/Pagination";
@@ -9,7 +8,6 @@ import { matchSearch } from "../utils/search";
 
 export default function Auditoria() {
   const { formatFecha } = useInventory();
-  const { t } = useTranslation();
   
   const [logs, setLogs] = useState([]);
   const [cargando, setCargando] = useState(true);

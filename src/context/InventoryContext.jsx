@@ -1,9 +1,7 @@
 import { createContext, useState, useCallback, useEffect, useMemo } from "react";
 import Swal from "sweetalert2";
 import i18next from "i18next";
-import { writeLog } from "../utils/logger";
 import { fetchSheet } from "../services/api";
-import { calculatePricing } from "../utils/pricing";
 import * as invService from "../services/inventoryService";
 import { useAuth } from "./useAuth";
 import { DEFAULT_USUARIOS, formatUsuario } from "./AuthContext";
@@ -121,7 +119,7 @@ export function InventoryProvider({ children }) {
       const nuevo = await invService.saveProduct(prod, productos, usuarioActivo);
       setProductos(prev => [...prev, nuevo]);
       Swal.fire({ icon: "success", title: i18next.t("alerts.product_added"), timer: 1500, showConfirmButton: false });
-    } catch (err) {
+    } catch {
       Swal.fire({ icon: "error", title: "Error de Conexión", text: "No se pudo guardar el producto." });
     }
   };
@@ -131,7 +129,7 @@ export function InventoryProvider({ children }) {
       const editado = await invService.saveProduct(prod, productos, usuarioActivo);
       setProductos(prev => prev.map(p => p.id === prod.id ? editado : p));
       if (!silencioso) Swal.fire({ icon: "success", title: i18next.t("alerts.product_updated"), timer: 1500, showConfirmButton: false });
-    } catch (err) {
+    } catch {
       if (!silencioso) Swal.fire({ icon: "error", title: "Error de Conexión", text: "No se pudo actualizar el producto." });
     }
   };

@@ -496,28 +496,17 @@ export async function createSale(venta, currentProducts, currentMovements, curre
   });
 
   // Exclude 'vendedor' — column does not exist in DB; kept only in local state for receipts
-  const { vendedor: _vendedor, ...ventaParaDB } = nuevaVenta;
-  await postAction("Ventas", "create", {
-    ...ventaParaDB,
-    items: JSON.stringify(nuevaVenta.items)
+  const ventaParaDB = { ...nuevaVenta };
+  delete ventaParaDB.vendedor;
+
+  // Ejecutar venta, movimientos y actualización de stock en una sola transacción SQL atómica en backend
+  await postAction("Ventas", "procesarVenta", {
+    venta: {
+      ...ventaParaDB,
+      items: JSON.stringify(nuevaVenta.items)
+    },
+    movimientos: nuevosMovimientos
   });
-
-  for (const mov of nuevosMovimientos) {
-    await postAction("Movimientos", "create", mov);
-  }
-
-  for (const item of venta.items) {
-    const prod = productosActualizados.find((p) => p.id === item.productoId);
-    if (prod) {
-      const originalProd = productosActuales.find((p) => p.id === item.productoId);
-      const marginChanged = originalProd && item.nuevoMargen !== undefined && item.nuevoMargen !== originalProd.margGanancia;
-      if (marginChanged) {
-        await postAction("Productos", "edit", prod);
-      } else {
-        await postAction("Productos", "edit", { id: prod.id, stock: prod.stock });
-      }
-    }
-  }
 
   writeLog({
     usuario: userActive?.nombre || "Sistema",

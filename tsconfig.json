@@ -1,0 +1,48 @@
+{
+  "compilerOptions": {
+    /* ── Objetivo y módulo ────────────────────────────────── */
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+
+    /* ── React ────────────────────────────────────────────── */
+    "jsx": "react-jsx",
+
+    /* ── Migración incremental: coexistencia JS + TS ──────── */
+    "allowJs": true,
+    "checkJs": false,
+    "strict": false,
+
+    /* ── Interoperabilidad ────────────────────────────────── */
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+
+    /* ── Output (Vite gestiona la compilación real) ───────── */
+    "noEmit": true,
+
+    /* ── Rutas ────────────────────────────────────────────── */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
+
+    /* ── Mejoras de rigor para archivos .ts nuevos ────────── */
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.js",
+    "src/**/*.jsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "coverage",
+    "netlify"
+  ]
+}

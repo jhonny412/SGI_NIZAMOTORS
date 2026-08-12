@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useInventory } from "../context/useInventory";
 import { useAuth } from "../context/useAuth";
-import Swal from "sweetalert2";
 
 function UserAvatar({ avatarType, rol, name, className }) {
   const isSuper = rol?.toLowerCase() === "superadmin";
@@ -23,40 +22,48 @@ function UserAvatar({ avatarType, rol, name, className }) {
     );
   }
   
-  if (avatarType === "vendedor" || rol?.toLowerCase() === "vendedor") {
-    return (
-      <div className={`rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-500 text-slate-100 flex items-center justify-center shadow-lg ${className}`}>
-        <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95a15.65 15.65 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.92 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14c-.16-.64-.26-1.31-.26-2s.1-1.36.26-2h3.38c-.08.66-.14 1.33-.14 2 0 .67.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56A7.987 7.987 0 0 1 5.08 16zm2.95-8H5.08a7.987 7.987 0 0 1 3.38-3.56c-.6 1.11-1.06 2.31-1.38 3.56zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.34-.16-2 0-.67.07-1.35.16-2h4.68c.09.65.16 1.33.16 2 0 .66-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a7.987 7.987 0 0 1-4.33 3.56zM16.36 14c.08-.66.14-1.33.14-2 0-.67-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/>
-        </svg>
-      </div>
-    );
-  }
-
   return (
-    <div className={`rounded-2xl bg-gradient-to-tr from-slate-700 to-slate-500 text-slate-100 flex items-center justify-center shadow-lg ${className}`}>
+    <div className={`rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-500 text-slate-100 flex items-center justify-center shadow-lg ${className}`}>
       <span className="font-black text-xl">{name ? name.charAt(0).toUpperCase() : "U"}</span>
     </div>
   );
 }
 
 export default function Login() {
-  const { usuarios, login } = useAuth();
   const { cargando } = useInventory();
-
+  const { usuarios, login } = useAuth();
+  
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
   const [pin, setPin] = useState("");
   const pinInputRef = useRef(null);
 
-  // Auto-enfocar entrada al seleccionar usuario
-  useEffect(() => {
-    if (usuarioSeleccionado) {
+  const ejecutarLogin = async (pinCompletado) => {
+    if (!usuarioSeleccionado) return;
+    
+    const exito = await login(usuarioSeleccionado.id, pinCompletado);
+    if (!exito) {
       setPin("");
-      // Dar un pequeño delay para que el DOM se renderice
-      setTimeout(() => {
-        if (pinInputRef.current) pinInputRef.current.focus();
-      }, 100);
     }
+  };
+
+  const handlePinInput = (num) => {
+    if (pin.length < 4) {
+      const nuevoPin = pin + num;
+      setPin(nuevoPin);
+      
+      // Intentar login automáticamente al completar los 4 dígitos
+      if (nuevoPin.length === 4) {
+        ejecutarLogin(nuevoPin);
+      }
+    }
+  };
+
+  const handleBackspace = () => {
+    setPin(prev => prev.slice(0, -1));
+  };
+
+  useEffect(() => {
+    setPin("");
   }, [usuarioSeleccionado]);
 
   // Manejar entrada de teclado físico
@@ -77,34 +84,6 @@ export default function Login() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [usuarioSeleccionado, pin]);
 
-  const handlePinInput = (num) => {
-    if (pin.length < 4) {
-      const nuevoPin = pin + num;
-      setPin(nuevoPin);
-      
-      // Intentar login automáticamente al completar los 4 dígitos
-      if (nuevoPin.length === 4) {
-        ejecutarLogin(nuevoPin);
-      }
-    }
-  };
-
-  const handleBackspace = () => {
-    setPin(prev => prev.slice(0, -1));
-  };
-
-  const ejecutarLogin = async (pinCompletado) => {
-    if (!usuarioSeleccionado) return;
-    
-    const exito = await login(usuarioSeleccionado.id, pinCompletado);
-    if (!exito) {
-      // Limpiar PIN si falla para volver a intentar
-      setPin("");
-      if (pinInputRef.current) pinInputRef.current.focus();
-    }
-  };
-
-  // Timeout fallback para evitar bucle de carga infinito si la red falla y realmente hay 0 usuarios
   const [timeoutSuperado, setTimeoutSuperado] = useState(false);
 
   useEffect(() => {
@@ -159,8 +138,6 @@ export default function Login() {
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 justify-center">
               {usuarios.map((u) => {
-                const inicial = u.nombre.charAt(0).toUpperCase();
-                const esAdmin = u.rol.toLowerCase() === "admin";
                 return (
                   <button
                     key={u.id}

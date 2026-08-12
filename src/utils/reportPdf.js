@@ -1,6 +1,21 @@
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+// ──────────────────────────────────────────────────────────────────────────────
+// reportPdf.js — Generación de PDFs con carga dinámica de jsPDF + jspdf-autotable
+// Las librerías se importan solo cuando el usuario solicita un PDF (dynamic import),
+// reduciendo el bundle inicial de la aplicación en ~300 KB.
+// ──────────────────────────────────────────────────────────────────────────────
 import { LOGO_LIGHT_DATA } from "./logoData";
+
+/**
+ * Carga jsPDF y jspdf-autotable dinámicamente la primera vez que se necesiten.
+ * Las importaciones se almacenan en caché gracias al módulo ES (singleton).
+ */
+async function loadPdfLibraries() {
+  const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+    import("jspdf"),
+    import("jspdf-autotable"),
+  ]);
+  return { jsPDF, autoTable };
+}
 
 function formatMoney(value) {
   return `S/. ${Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -58,7 +73,8 @@ function saveOrPreview(doc, title, prefix, fechaDesde, fechaHasta, usuario, prev
   return null;
 }
 
-export function generateVentasPdf({ ventas, fechaDesde, fechaHasta, formatFecha, usuario, preview = false }) {
+export async function generateVentasPdf({ ventas, fechaDesde, fechaHasta, formatFecha, usuario, preview = false }) {
+  const { jsPDF, autoTable } = await loadPdfLibraries();
   const doc = new jsPDF({ orientation: "landscape" });
   const title = "Reporte de Ventas";
 
@@ -93,7 +109,7 @@ export function generateVentasPdf({ ventas, fechaDesde, fechaHasta, formatFecha,
   return saveOrPreview(doc, title, "reporte-ventas", fechaDesde, fechaHasta, usuario, preview);
 }
 
-export function generateMovimientosPdf({
+export async function generateMovimientosPdf({
   movimientos,
   productos,
   fechaDesde,
@@ -104,6 +120,7 @@ export function generateMovimientosPdf({
   usuario,
   preview = false,
 }) {
+  const { jsPDF, autoTable } = await loadPdfLibraries();
   const doc = new jsPDF({ orientation: "landscape" });
 
   const getProducto = (id) => productos.find((p) => p.id === id);
@@ -144,7 +161,7 @@ export function generateMovimientosPdf({
   return saveOrPreview(doc, title, prefix, fechaDesde, fechaHasta, usuario, preview);
 }
 
-export function generateKardexPdf({
+export async function generateKardexPdf({
   movimientos,
   productos,
   fechaDesde,
@@ -153,6 +170,7 @@ export function generateKardexPdf({
   usuario,
   preview = false,
 }) {
+  const { jsPDF, autoTable } = await loadPdfLibraries();
   const doc = new jsPDF({ orientation: "landscape" });
   const title = "Reporte de Kardex de Inventario";
 

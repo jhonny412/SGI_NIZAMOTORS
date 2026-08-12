@@ -1,8 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { AuthProvider } from "./context/AuthContext";
 import { UIProvider } from "./context/UIContext";
 import { InventoryProvider } from "./context/InventoryContext";
-import { useInventory } from "./context/useInventory";
 import { useAuth } from "./context/useAuth";
 import { useUI } from "./context/useUI";
 import Layout from "./components/Layout";
@@ -11,6 +10,24 @@ import { ROUTES } from "./config/routes";
 import { initLogger, flushPendingLogs } from "./utils/logger";
 
 
+// ──────────────────────────────────────────────────────────────
+// Fallback spinner mientras se descarga el chunk de la página
+// ──────────────────────────────────────────────────────────────
+function PageLoadingFallback() {
+  return (
+    <div className="flex items-center justify-center h-full min-h-[60vh]">
+      <div style={{ textAlign: "center", opacity: 0.6 }}>
+        <span
+          className="material-symbols-outlined"
+          style={{ fontSize: 48, display: "block", marginBottom: 12, animation: "spin 1s linear infinite" }}
+        >
+          progress_activity
+        </span>
+        <p style={{ fontSize: 14, fontWeight: 500 }}>Cargando módulo…</p>
+      </div>
+    </div>
+  );
+}
 
 // ──────────────────────────────────────────────────────────────
 // Componente raíz: maneja la sincronización de logs pendientes
@@ -58,9 +75,14 @@ function AppContent() {
     return <Login />;
   }
 
-  return <Layout>{renderPage()}</Layout>;
+  return (
+    <Layout>
+      <Suspense fallback={<PageLoadingFallback />}>
+        {renderPage()}
+      </Suspense>
+    </Layout>
+  );
 }
-
 
 
 
@@ -77,4 +99,3 @@ export default function App() {
     </AuthProvider>
   );
 }
-

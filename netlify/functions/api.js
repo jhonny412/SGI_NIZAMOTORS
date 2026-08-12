@@ -36,11 +36,11 @@ function getPool() {
   return pool;
 }
 
-export async function handler(event, context) {
+export async function handler(event, _context) {
   // Manejo de CORS (Preflight OPTIONS)
   const headers = {
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Content-Type": "application/json"
   };
@@ -261,6 +261,45 @@ export async function handler(event, context) {
           resultData = { message: `Registro ${id} eliminado`, id };
         }
 
+      } else if (currentAction === "procesarVenta") {
+        const { venta, movimientos } = payload;
+        const conn = await dbPool.getConnection();
+        try {
+          await conn.beginTransaction();
+
+          const formatVal = (val) => (val !== null && typeof val === "object" ? JSON.stringify(val) : val);
+
+          // 1. Insertar registro de venta
+          const vKeys = Object.keys(venta).filter(k => k !== "id");
+          const vVals = vKeys.map(k => formatVal(venta[k]));
+          const vQuery = `INSERT INTO ventas (\`${vKeys.join("`, `")}\`) VALUES (${vKeys.map(() => "?").join(", ")})`;
+          const [vRes] = await conn.execute(vQuery, vVals);
+          const ventaId = vRes.insertId;
+
+          // 2. Insertar movimientos y actualizar stock de productos
+          if (Array.isArray(movimientos)) {
+            for (const mov of movimientos) {
+              const { id: _mId, ...movFields } = mov;
+              const mKeys = Object.keys(movFields);
+              const mVals = mKeys.map(k => formatVal(movFields[k]));
+              const mQuery = `INSERT INTO movimientos (\`${mKeys.join("`, `")}\`) VALUES (${mKeys.map(() => "?").join(", ")})`;
+              await conn.execute(mQuery, mVals);
+
+              if (mov.productoId && mov.cantidad) {
+                await conn.execute(`UPDATE productos SET stock = stock - ? WHERE id = ?`, [mov.cantidad, mov.productoId]);
+              }
+            }
+          }
+
+          await conn.commit();
+          const [ventaRow] = await conn.query(`SELECT * FROM ventas WHERE id = ?`, [ventaId]);
+          resultData = ventaRow[0] || { id: ventaId, ...venta };
+        } catch (txErr) {
+          await conn.rollback();
+          throw txErr;
+        } finally {
+          conn.release();
+        }
       } else {
         return {
           statusCode: 400,

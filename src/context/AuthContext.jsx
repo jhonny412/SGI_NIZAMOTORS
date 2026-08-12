@@ -1,6 +1,7 @@
 import { createContext, useState } from "react";
 import Swal from "sweetalert2";
 import { writeLog } from "../utils/logger";
+import { hashPin, generateSessionToken } from "../utils/security";
 
 export const AuthContext = createContext();
 
@@ -34,7 +35,6 @@ function loadUsuariosFromStorage() {
     const saved = localStorage.getItem("sgi-usuarios");
     const parsed = saved ? JSON.parse(saved) : null;
     if (Array.isArray(parsed) && parsed.length > 0) {
-      // Solo Admin / SuperAdmin (ya no se usa el perfil Vendedor)
       const filtrados = parsed
         .map(formatUsuario)
         .filter((u) => {
@@ -56,14 +56,30 @@ export function AuthProvider({ children }) {
     return saved ? JSON.parse(saved) : null;
   });
 
-  const login = async (id, pin) => {
+  const login = async (id, pinIngresado) => {
     const user = usuarios.find((u) => u.id === Number(id));
-    if (user && String(user.pin) === String(pin)) {
-      setUsuarioActivo(user);
-      sessionStorage.setItem("sgi-usuario-activo", JSON.stringify(user));
-      writeLog({ usuario: user.nombre, accion: "Inicio de sesión", modulo: "Seguridad", detalles: `Rol ${user.rol}` });
+    if (!user) {
+      Swal.fire({ icon: "error", title: "Perfil no encontrado", text: "El perfil de usuario seleccionado no existe.", confirmButtonColor: "#f59e0b" });
+      return false;
+    }
+
+    const hashedInput = hashPin(pinIngresado);
+    const pinValido = String(user.pin) === String(pinIngresado) || String(user.pin) === hashedInput;
+
+    if (pinValido) {
+      // Guardar el usuario con su PIN hasheado
+      const userConHash = { ...user, pin: hashedInput };
+      setUsuarioActivo(userConHash);
+      sessionStorage.setItem("sgi-usuario-activo", JSON.stringify(userConHash));
+
+      // Generar token de sesión y almacenar para encabezados Bearer
+      const token = generateSessionToken(userConHash);
+      sessionStorage.setItem("sgi-auth-token", token);
+
+      writeLog({ usuario: user.nombre, accion: "Inicio de sesión seguro", modulo: "Seguridad", detalles: `Rol ${user.rol}` });
       return true;
     }
+
     Swal.fire({ icon: "error", title: "PIN incorrecto", text: "El PIN ingresado no coincide con el perfil.", confirmButtonColor: "#f59e0b" });
     return false;
   };
@@ -72,6 +88,7 @@ export function AuthProvider({ children }) {
     if (usuarioActivo) writeLog({ usuario: usuarioActivo.nombre, accion: "Cierre de sesión", modulo: "Seguridad" });
     setUsuarioActivo(null);
     sessionStorage.removeItem("sgi-usuario-activo");
+    sessionStorage.removeItem("sgi-auth-token");
   };
 
   return (

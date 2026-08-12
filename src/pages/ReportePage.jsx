@@ -183,7 +183,7 @@ export default function ReportePage() {
     };
   }, [config, datosFiltrados]);
 
-  const handleVistaPrevia = () => {
+  const handleVistaPrevia = async () => {
     if (datosFiltrados.length === 0) {
       Swal.fire({
         icon: "info",
@@ -195,7 +195,7 @@ export default function ReportePage() {
 
     let pdfDataUri;
     if (config.type === "ventas") {
-      pdfDataUri = generateVentasPdf({
+      pdfDataUri = await generateVentasPdf({
         ventas: datosFiltrados,
         fechaDesde,
         fechaHasta,
@@ -204,7 +204,7 @@ export default function ReportePage() {
         preview: true,
       });
     } else if (config.type === "kardex") {
-      pdfDataUri = generateKardexPdf({
+      pdfDataUri = await generateKardexPdf({
         movimientos: datosFiltrados,
         productos,
         fechaDesde,
@@ -214,7 +214,7 @@ export default function ReportePage() {
         preview: true,
       });
     } else {
-      pdfDataUri = generateMovimientosPdf({
+      pdfDataUri = await generateMovimientosPdf({
         movimientos: datosFiltrados,
         productos,
         fechaDesde,
@@ -230,12 +230,12 @@ export default function ReportePage() {
     setShowPreview(true);
   };
 
-  const handleDownloadPdf = () => {
+  const handleDownloadPdf = async () => {
     setShowPreview(false);
     if (config.type === "ventas") {
-      generateVentasPdf({ ventas: datosFiltrados, fechaDesde, fechaHasta, formatFecha, usuario: usuarioNombre });
+      await generateVentasPdf({ ventas: datosFiltrados, fechaDesde, fechaHasta, formatFecha, usuario: usuarioNombre });
     } else if (config.type === "kardex") {
-      generateKardexPdf({
+      await generateKardexPdf({
         movimientos: datosFiltrados,
         productos,
         fechaDesde,
@@ -244,7 +244,7 @@ export default function ReportePage() {
         usuario: usuarioNombre,
       });
     } else {
-      generateMovimientosPdf({
+      await generateMovimientosPdf({
         movimientos: datosFiltrados,
         productos,
         fechaDesde,

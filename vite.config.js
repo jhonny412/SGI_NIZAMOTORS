@@ -74,5 +74,15 @@ export default defineConfig(({ command }) => ({
     tailwindcss(),
     // Solo activo en modo desarrollo (npm run dev), no en build de producción
     ...(command === 'serve' ? [localApiPlugin()] : [])
-  ]
+  ],
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './src/test/setup.js',
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      exclude: ['node_modules/', 'src/test/setup.js', 'scripts/']
+    }
+  }
 }))
