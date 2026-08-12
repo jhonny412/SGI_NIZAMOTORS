@@ -145,10 +145,9 @@ export function InventoryProvider({ children }) {
         try {
           await invService.deleteProductApi(id, productos.find(p => p.id === id), usuarioActivo);
           setProductos(prev => prev.filter(p => p.id !== id));
-          setMovimientos(prev => prev.filter(m => m.productoId !== id));
           Swal.fire({ icon: "success", title: i18next.t("alerts.deleted"), timer: 1500, showConfirmButton: false });
-        } catch {
-          Swal.fire({ icon: "error", title: "Error de Conexión", text: "No se pudo eliminar el producto." });
+        } catch (err) {
+          Swal.fire({ icon: "error", title: "Error al eliminar", text: err.message || "No se pudo eliminar el producto." });
         }
       }
     });

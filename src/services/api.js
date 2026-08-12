@@ -38,12 +38,28 @@ export async function postAction(sheetName, action, data = {}) {
     action
   };
 
-  // NOTE: No Content-Type header — Google Apps Script's CORS handling
-  // works best without triggering CORS preflight (same as original fetch calls).
-  await fetch(API_URL, {
+  const response = await fetch(API_URL, {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body)
   });
-  // Apps Script returns opaque responses on cross-origin; errors surface as
-  // network-level exceptions which are caught at the call site.
+
+  let result = {};
+  const responseText = await response.text().catch(() => "");
+  try {
+    result = JSON.parse(responseText);
+  } catch {
+    result = {};
+  }
+
+  if (!response.ok) {
+    const errorMsg = result.message || `HTTP ${response.status} en ${sheetName}/${action}`;
+    throw new Error(errorMsg);
+  }
+
+  if (result.status === "error") {
+    throw new Error(result.message || `Error en ${sheetName}/${action}`);
+  }
+
+  return result.data || result;
 }

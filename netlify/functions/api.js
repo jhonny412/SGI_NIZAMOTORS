@@ -79,7 +79,12 @@ export async function handler(event, context) {
       }
 
       // Obtener todos los registros ordenados por ID
-      const [rows] = await dbPool.query(`SELECT * FROM \`${tableName}\` ORDER BY id ASC`);
+      let selectQuery = `SELECT * FROM \`${tableName}\` ORDER BY id ASC`;
+      if (["productos", "proveedores", "marcas", "categorias"].includes(tableName)) {
+        selectQuery = `SELECT * FROM \`${tableName}\` WHERE activo IS NULL OR activo = 1 ORDER BY id ASC`;
+      }
+
+      const [rows] = await dbPool.query(selectQuery);
       
       // Asegurarse de que los campos JSON o de objetos (como 'items' en ventas y traslados) se devuelvan como string
       // para mantener la compatibilidad 100% con JSON.parse() en el frontend original
@@ -226,18 +231,35 @@ export async function handler(event, context) {
           };
         }
 
-        const deleteQuery = `DELETE FROM \`${tableName}\` WHERE id = ?`;
-        const [deleteResult] = await dbPool.execute(deleteQuery, [id]);
+        // Borrado Lógico (Soft Delete) para colecciones del catálogo
+        if (["productos", "proveedores", "marcas", "categorias"].includes(tableName)) {
+          const updateQuery = `UPDATE \`${tableName}\` SET activo = 0 WHERE id = ?`;
+          const [updateResult] = await dbPool.execute(updateQuery, [id]);
 
-        if (deleteResult.affectedRows === 0) {
-          return {
-            statusCode: 404,
-            headers,
-            body: JSON.stringify({ status: "error", message: `ID ${id} no encontrado en ${sheet}` })
-          };
+          if (updateResult.affectedRows === 0) {
+            return {
+              statusCode: 404,
+              headers,
+              body: JSON.stringify({ status: "error", message: `ID ${id} no encontrado en ${sheet}` })
+            };
+          }
+
+          resultData = { message: `Registro ${id} desactivado (borrado lógico)`, id };
+        } else {
+          // Borrado Físico para otras tablas (ej. ventas de prueba)
+          const deleteQuery = `DELETE FROM \`${tableName}\` WHERE id = ?`;
+          const [deleteResult] = await dbPool.execute(deleteQuery, [id]);
+
+          if (deleteResult.affectedRows === 0) {
+            return {
+              statusCode: 404,
+              headers,
+              body: JSON.stringify({ status: "error", message: `ID ${id} no encontrado en ${sheet}` })
+            };
+          }
+
+          resultData = { message: `Registro ${id} eliminado`, id };
         }
-        
-        resultData = { message: `Registro ${id} eliminado`, id };
 
       } else {
         return {

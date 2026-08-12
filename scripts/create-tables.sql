@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS `proveedores` (
   `telefono` VARCHAR(100) NOT NULL DEFAULT '',
   `email` VARCHAR(255) NOT NULL DEFAULT '',
   `direccion` TEXT NULL,
+  `activo` TINYINT(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -30,6 +31,7 @@ CREATE TABLE IF NOT EXISTS `marcas` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `nombre` VARCHAR(255) NOT NULL DEFAULT '',
   `descripcion` TEXT NULL,
+  `activo` TINYINT(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -40,6 +42,7 @@ CREATE TABLE IF NOT EXISTS `categorias` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `nombre` VARCHAR(255) NOT NULL DEFAULT '',
   `descripcion` TEXT NULL,
+  `activo` TINYINT(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -74,6 +77,7 @@ CREATE TABLE IF NOT EXISTS `productos` (
   `imagenUrl` MEDIUMTEXT NULL,
   `imagenUrl2` MEDIUMTEXT NULL,
   `imagenUrl3` MEDIUMTEXT NULL,
+  `activo` TINYINT(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
