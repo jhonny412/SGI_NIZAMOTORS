@@ -143,7 +143,7 @@ export default function Creditos() {
             <div className="min-w-0">
               <p className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Total por Cobrar</p>
               <p className="mt-2.5 truncate text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-                S/. {montoTotalPendiente.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                S/. {montoTotalPendiente.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
               <p className="mt-1 text-xs font-semibold text-slate-400 dark:text-slate-500 font-medium">Valor de préstamos pendientes</p>
             </div>

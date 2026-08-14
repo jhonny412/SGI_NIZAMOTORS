@@ -36,7 +36,11 @@
     "reporte_ventas": "Ventas",
     "reporte_ingresos": "Ingresos",
     "reporte_salidas": "Salidas",
-    "reporte_kardex": "Kardex"
+    "reporte_kardex": "Kardex",
+    "auditoria": "Auditoría",
+    "seguridad": "Seguridad",
+    "usuarios": "Gestión Usuarios",
+    "administracion": "Administración"
   },
   "pages": {
     "dashboard": {

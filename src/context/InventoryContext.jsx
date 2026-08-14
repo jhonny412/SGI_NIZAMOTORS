@@ -45,64 +45,64 @@ export function InventoryProvider({ children }) {
 
   const [cargando, setCargando] = useState(() => !localStorage.getItem("sgi-productos"));
 
-  // Sincronización Inicial de datos
-  useEffect(() => {
-    const fetchDatos = async () => {
-      if (productos.length === 0) setCargando(true);
-      try {
-        const [dProd, dProv, dMarcas, dMov, dCat, dTras, dVentas, dUsuarios] = await Promise.all([
-          fetchSheet("Productos"), fetchSheet("Proveedores"), fetchSheet("Marcas"),
-          fetchSheet("Movimientos"), fetchSheet("Categorias"), fetchSheet("Traslados"),
-          fetchSheet("Ventas"), fetchSheet("Usuarios")
-        ]);
+  // Sincronización Inicial y Recarga al cambiar de usuario
+  const fetchDatos = useCallback(async () => {
+    if (productos.length === 0) setCargando(true);
+    try {
+      const [dProd, dProv, dMarcas, dMov, dCat, dTras, dVentas, dUsuarios] = await Promise.all([
+        fetchSheet("Productos"), fetchSheet("Proveedores"), fetchSheet("Marcas"),
+        fetchSheet("Movimientos"), fetchSheet("Categorias"), fetchSheet("Traslados"),
+        fetchSheet("Ventas"), fetchSheet("Usuarios")
+      ]);
 
-        const fProd = invService.formatProductos(dProd);
-        const fProv = dProv.map(p => ({ ...p, id: Number(p.id) }));
-        const fMarcas = dMarcas.map(m => ({ ...m, id: Number(m.id) }));
-        const fMov = invService.formatMovements(dMov);
-        const fCat = dCat.map(c => ({ ...c, id: Number(c.id) }));
-        const fTras = invService.formatTransfers(dTras);
-        const fVentas = invService.formatSales(dVentas);
-        // Credenciales oficiales desde la hoja Usuarios (solo Admin / SuperAdmin)
-        const fUsuarios = (Array.isArray(dUsuarios) ? dUsuarios : [])
-          .map(formatUsuario)
-          .filter((u) => {
-            const rol = u.rol.toLowerCase();
-            return u.id && u.nombre && u.pin && (rol === "admin" || rol === "superadmin");
-          });
-        const usuariosFinal = fUsuarios.length ? fUsuarios : DEFAULT_USUARIOS;
-
-        setProductos(fProd);
-        setProveedores(fProv);
-        setMarcas(fMarcas);
-        setMovimientos(fMov);
-        setCategorias(fCat);
-        setTraslados(fTras);
-        setVentas(fVentas);
-        setUsuarios(usuariosFinal);
-
-        localStorage.setItem("sgi-productos", JSON.stringify(fProd));
-        localStorage.setItem("sgi-proveedores", JSON.stringify(fProv));
-        localStorage.setItem("sgi-marcas", JSON.stringify(fMarcas));
-        localStorage.setItem("sgi-movimientos", JSON.stringify(fMov));
-        localStorage.setItem("sgi-categorias", JSON.stringify(fCat));
-        localStorage.setItem("sgi-traslados", JSON.stringify(fTras));
-        localStorage.setItem("sgi-ventas", JSON.stringify(fVentas));
-        localStorage.setItem("sgi-usuarios", JSON.stringify(usuariosFinal));
-      } catch (error) {
-        console.error("Error al obtener de Google Sheets", error);
-        // Si la API falla y no hay perfiles en memoria, usar semillas locales
-        setUsuarios((prev) => {
-          if (prev.length > 0) return prev;
-          localStorage.setItem("sgi-usuarios", JSON.stringify(DEFAULT_USUARIOS));
-          return DEFAULT_USUARIOS;
+      const fProd = invService.formatProductos(dProd);
+      const fProv = dProv.map(p => ({ ...p, id: Number(p.id) }));
+      const fMarcas = dMarcas.map(m => ({ ...m, id: Number(m.id) }));
+      const fMov = invService.formatMovements(dMov);
+      const fCat = dCat.map(c => ({ ...c, id: Number(c.id) }));
+      const fTras = invService.formatTransfers(dTras);
+      const fVentas = invService.formatSales(dVentas);
+      // Credenciales oficiales desde la hoja Usuarios (solo Admin / SuperAdmin)
+      const fUsuarios = (Array.isArray(dUsuarios) ? dUsuarios : [])
+        .map(formatUsuario)
+        .filter((u) => {
+          const rol = u.rol.toLowerCase();
+          return u.id && u.nombre && u.pin && (rol === "admin" || rol === "superadmin" || rol === "vendedor");
         });
-      } finally {
-        setCargando(false);
-      }
-    };
+      const usuariosFinal = fUsuarios.length ? fUsuarios : DEFAULT_USUARIOS;
+
+      setProductos(fProd);
+      setProveedores(fProv);
+      setMarcas(fMarcas);
+      setMovimientos(fMov);
+      setCategorias(fCat);
+      setTraslados(fTras);
+      setVentas(fVentas);
+      setUsuarios(usuariosFinal);
+
+      localStorage.setItem("sgi-productos", JSON.stringify(fProd));
+      localStorage.setItem("sgi-proveedores", JSON.stringify(fProv));
+      localStorage.setItem("sgi-marcas", JSON.stringify(fMarcas));
+      localStorage.setItem("sgi-movimientos", JSON.stringify(fMov));
+      localStorage.setItem("sgi-categorias", JSON.stringify(fCat));
+      localStorage.setItem("sgi-traslados", JSON.stringify(fTras));
+      localStorage.setItem("sgi-ventas", JSON.stringify(fVentas));
+      localStorage.setItem("sgi-usuarios", JSON.stringify(usuariosFinal));
+    } catch (error) {
+      console.error("Error al obtener datos:", error);
+      setUsuarios((prev) => {
+        if (prev.length > 0) return prev;
+        localStorage.setItem("sgi-usuarios", JSON.stringify(DEFAULT_USUARIOS));
+        return DEFAULT_USUARIOS;
+      });
+    } finally {
+      setCargando(false);
+    }
+  }, [productos.length]);
+
+  useEffect(() => {
     fetchDatos();
-  }, []);
+  }, [usuarioActivo, fetchDatos]);
 
   // Persistencia de estados específicos
   useEffect(() => { localStorage.setItem("sgi-traslados", JSON.stringify(traslados)); }, [traslados]);
@@ -119,18 +119,18 @@ export function InventoryProvider({ children }) {
       const nuevo = await invService.saveProduct(prod, productos, usuarioActivo);
       setProductos(prev => [...prev, nuevo]);
       Swal.fire({ icon: "success", title: i18next.t("alerts.product_added"), timer: 1500, showConfirmButton: false });
-    } catch {
-      Swal.fire({ icon: "error", title: "Error de Conexión", text: "No se pudo guardar el producto." });
+    } catch (err) {
+      Swal.fire({ icon: "error", title: "Error", text: err.message || "No se pudo guardar el producto." });
     }
   };
 
-  const editarProducto = async (prod, silencioso = false) => {
+  const editarProducto = async (prod, silencioso = false, customAccion = null) => {
     try {
-      const editado = await invService.saveProduct(prod, productos, usuarioActivo);
+      const editado = await invService.saveProduct(prod, productos, usuarioActivo, customAccion);
       setProductos(prev => prev.map(p => p.id === prod.id ? editado : p));
       if (!silencioso) Swal.fire({ icon: "success", title: i18next.t("alerts.product_updated"), timer: 1500, showConfirmButton: false });
-    } catch {
-      if (!silencioso) Swal.fire({ icon: "error", title: "Error de Conexión", text: "No se pudo actualizar el producto." });
+    } catch (err) {
+      if (!silencioso) Swal.fire({ icon: "error", title: "Error", text: err.message || "No se pudo actualizar el producto." });
     }
   };
 
@@ -157,8 +157,8 @@ export function InventoryProvider({ children }) {
       const nuevo = await invService.saveSupplier(prov, proveedores, usuarioActivo);
       setProveedores(prev => [...prev, nuevo]);
       Swal.fire({ icon: "success", title: i18next.t("alerts.supplier_added"), timer: 1500, showConfirmButton: false });
-    } catch {
-      Swal.fire({ icon: "error", title: "Error de Conexión", text: "No se pudo guardar el proveedor." });
+    } catch (err) {
+      Swal.fire({ icon: "error", title: "Error", text: err.message || "No se pudo guardar el proveedor." });
     }
   };
 
@@ -167,8 +167,8 @@ export function InventoryProvider({ children }) {
       const editado = await invService.saveSupplier(prov, proveedores, usuarioActivo);
       setProveedores(prev => prev.map(p => p.id === prov.id ? editado : p));
       Swal.fire({ icon: "success", title: i18next.t("alerts.supplier_updated"), timer: 1500, showConfirmButton: false });
-    } catch {
-      Swal.fire({ icon: "error", title: "Error de Conexión", text: "No se pudo actualizar el proveedor." });
+    } catch (err) {
+      Swal.fire({ icon: "error", title: "Error", text: err.message || "No se pudo actualizar el proveedor." });
     }
   };
 
@@ -198,8 +198,8 @@ export function InventoryProvider({ children }) {
       const nuevo = await invService.saveBrand(marca, marcas, usuarioActivo);
       setMarcas(prev => [...prev, nuevo]);
       Swal.fire({ icon: "success", title: i18next.t("alerts.brand_added"), timer: 1500, showConfirmButton: false });
-    } catch {
-      Swal.fire({ icon: "error", title: "Error de Conexión", text: "No se pudo guardar la marca." });
+    } catch (err) {
+      Swal.fire({ icon: "error", title: "Error", text: err.message || "No se pudo guardar la marca." });
     }
   };
 
@@ -208,8 +208,8 @@ export function InventoryProvider({ children }) {
       const editada = await invService.saveBrand(marca, marcas, usuarioActivo);
       setMarcas(prev => prev.map(m => m.id === marca.id ? editada : m));
       Swal.fire({ icon: "success", title: i18next.t("alerts.brand_updated"), timer: 1500, showConfirmButton: false });
-    } catch {
-      Swal.fire({ icon: "error", title: "Error de Conexión", text: "No se pudo actualizar la marca." });
+    } catch (err) {
+      Swal.fire({ icon: "error", title: "Error", text: err.message || "No se pudo actualizar la marca." });
     }
   };
 
@@ -240,8 +240,8 @@ export function InventoryProvider({ children }) {
       const nuevo = await invService.saveCategory(cat, categorias, usuarioActivo);
       setCategorias(prev => [...prev, nuevo]);
       Swal.fire({ icon: "success", title: "Categoría agregada", timer: 1500, showConfirmButton: false });
-    } catch {
-      Swal.fire({ icon: "error", title: "Error de Conexión", text: "No se pudo guardar la categoría." });
+    } catch (err) {
+      Swal.fire({ icon: "error", title: "Error", text: err.message || "No se pudo guardar la categoría." });
     }
   };
 
@@ -250,8 +250,8 @@ export function InventoryProvider({ children }) {
       const editada = await invService.saveCategory(cat, categorias, usuarioActivo);
       setCategorias(prev => prev.map(c => c.id === cat.id ? editada : c));
       Swal.fire({ icon: "success", title: "Categoría actualizada", timer: 1500, showConfirmButton: false });
-    } catch {
-      Swal.fire({ icon: "error", title: "Error de Conexión", text: "No se pudo actualizar la categoría." });
+    } catch (err) {
+      Swal.fire({ icon: "error", title: "Error", text: err.message || "No se pudo actualizar la categoría." });
     }
   };
 
@@ -365,28 +365,46 @@ export function InventoryProvider({ children }) {
 
   const formatFecha = useCallback((fechaStr) => {
     if (!fechaStr) return "";
-    if (/^\d{4}-\d{2}-\d{2}$/.test(fechaStr)) {
-      const [yyyy, mm, dd] = fechaStr.split("-");
+    const str = String(fechaStr).trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+      const [yyyy, mm, dd] = str.split("-");
       return `${dd}/${mm}/${yyyy} 00:00:00`;
     }
-    if (/^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}:\d{2}$/.test(fechaStr)) return fechaStr;
-    const d = new Date(fechaStr);
-    if (isNaN(d.getTime())) return fechaStr;
+
+    let d = new Date(str);
+    if (isNaN(d.getTime())) {
+      let cleanStr = str.replace(/p\.\s*m\./i, "PM").replace(/a\.\s*m\./i, "AM");
+      const parts = cleanStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?$/i);
+      if (parts) {
+        let [, dd, mm, yyyy, hh, min, ss, ampm] = parts;
+        let h = parseInt(hh, 10);
+        if (ampm) {
+          if (ampm.toUpperCase() === "PM" && h < 12) h += 12;
+          if (ampm.toUpperCase() === "AM" && h === 12) h = 0;
+        }
+        return `${String(dd).padStart(2, "0")}/${String(mm).padStart(2, "0")}/${yyyy} ${String(h).padStart(2, "0")}:${String(min || 0).padStart(2, "0")}:${String(ss || 0).padStart(2, "0")}`;
+      }
+      d = new Date(cleanStr);
+    }
+
+    if (isNaN(d.getTime())) return str;
+
     const day = String(d.getDate()).padStart(2, "0");
     const month = String(d.getMonth() + 1).padStart(2, "0");
     const year = d.getFullYear();
     const hours = String(d.getHours()).padStart(2, "0");
     const minutes = String(d.getMinutes()).padStart(2, "0");
     const seconds = String(d.getSeconds()).padStart(2, "0");
+
     return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
   }, []);
 
-  // ELIMINAR VENTA (BOTÓN TEMPORAL DE PRUEBAS)
+  // ELIMINAR VENTA (SOLO ADMIN)
   const eliminarVenta = (id) => {
     const venta = ventas.find((v) => Number(v.id) === Number(id));
     Swal.fire({
       title: "¿Eliminar venta?",
-      text: "Esta acción eliminará el registro de la venta y revertirá el stock de los productos. (Modo pruebas)",
+      text: "Esta acción eliminará el registro de la venta y revertirá el stock de los productos.",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#dc2626",
@@ -397,12 +415,14 @@ export function InventoryProvider({ children }) {
       if (res.isConfirmed) {
         try {
           if (venta && venta.items) {
-            // Revertir stock de los productos
+            // Revertir stock de los productos en estado y BD
             setProductos((prevProds) =>
               prevProds.map((prod) => {
                 const item = venta.items.find((i) => Number(i.productoId) === Number(prod.id));
                 if (item) {
-                  return { ...prod, stock: prod.stock + (Number(item.cantidad) || 0) };
+                  const nuevoStock = prod.stock + (Number(item.cantidad) || 0);
+                  invService.saveProduct({ ...prod, stock: nuevoStock }, productos, usuarioActivo, "Revertir Stock por Eliminación de Venta");
+                  return { ...prod, stock: nuevoStock };
                 }
                 return prod;
               })
@@ -410,7 +430,7 @@ export function InventoryProvider({ children }) {
           }
           await invService.deleteSaleApi(id, venta, productos, usuarioActivo);
           setVentas((prev) => prev.filter((v) => Number(v.id) !== Number(id)));
-          Swal.fire({ icon: "success", title: "Venta eliminada", timer: 1500, showConfirmButton: false });
+          Swal.fire({ icon: "success", title: "Venta eliminada", text: "La venta ha sido eliminada y el stock revertido.", timer: 2000, showConfirmButton: false });
         } catch {
           Swal.fire({ icon: "error", title: "Error", text: "No se pudo eliminar la venta." });
         }

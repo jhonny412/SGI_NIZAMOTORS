@@ -24,3 +24,18 @@ export function calculatePricing(pCompra, margGanancia) {
 
   return { pVenta, utilidad };
 }
+
+/**
+ * Formats a number using en-US locale: commas for thousands and dot for decimals (e.g. 2,500.00).
+ * 
+ * @param {number|string} val - Value to format
+ * @param {number} decimals - Number of decimal places (default 2)
+ * @returns {string} Formatted number string
+ */
+export function formatMoney(val, decimals = 2) {
+  const num = Number(val) || 0;
+  return num.toLocaleString("en-US", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  });
+}

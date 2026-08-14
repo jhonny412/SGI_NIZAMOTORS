@@ -423,11 +423,11 @@ export default function ProductFormModal({ producto, abierto, onCerrar }) {
             <div className="rounded-2xl border border-[#334155] bg-slate-950/20 p-4 grid grid-cols-2 gap-4 shadow-inner">
               <div className="bg-slate-900 rounded-xl p-4 border border-[#334155]/60 shadow-sm transition-all hover:scale-[1.02]">
                 <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest">{t("forms.product.sale_price")}</span>
-                <p className="text-2xl font-extrabold text-amber-550 mt-1">S/. {pVenta.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                <p className="text-2xl font-extrabold text-amber-550 mt-1">S/. {pVenta.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
               </div>
               <div className="bg-slate-900 rounded-xl p-4 border border-[#334155]/60 shadow-sm transition-all hover:scale-[1.02]">
                 <span className="text-[10px] font-black text-emerald-450 uppercase tracking-widest">{t("forms.product.profit")}</span>
-                <p className="text-2xl font-extrabold text-emerald-400 mt-1">S/. {utilidad.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                <p className="text-2xl font-extrabold text-emerald-400 mt-1">S/. {utilidad.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
               </div>
             </div>
           </div>

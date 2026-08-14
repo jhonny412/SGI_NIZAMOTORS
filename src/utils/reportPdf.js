@@ -18,12 +18,12 @@ async function loadPdfLibraries() {
 }
 
 function formatMoney(value) {
-  return `S/. ${Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `S/. ${Number(value || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function addReportHeadersAndFooter(doc, title, fechaDesde, fechaHasta, usuario) {
   const totalPages = doc.internal.getNumberOfPages();
-  const fechaGeneracion = new Date().toLocaleString();
+  const fechaGeneracion = new Date().toLocaleString("es-PE", { hour12: false });
 
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);

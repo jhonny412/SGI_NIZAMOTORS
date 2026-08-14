@@ -77,7 +77,7 @@ export default function Sidebar() {
     });
 
     // Mantener orden: Comercial -> Inventario -> Compras -> Reportes -> Seguridad
-    const order = ["comercial", "inventario", "compras", "reportes", "seguridad"];
+    const order = ["comercial", "inventario", "compras", "reportes", "seguridad", "administracion"];
     order.forEach(gId => {
       if (groups[gId]) {
         list.push(groups[gId]);
@@ -114,7 +114,7 @@ export default function Sidebar() {
       <aside
         className={`fixed left-0 top-0 z-30 h-full border-r transition-all duration-300 ease-out 
           bg-white/95 dark:bg-[#131b2e]/95 backdrop-blur-xl border-slate-200 dark:border-[#334155] shadow-2xl shadow-slate-900/10 dark:shadow-slate-950/50
-          ${sidebarAbierto ? "w-64 overflow-hidden" : "w-0 lg:w-[72px] overflow-visible"}`}
+          ${sidebarAbierto ? "w-64 translate-x-0 overflow-y-auto overflow-x-hidden" : "-translate-x-full lg:translate-x-0 lg:w-[72px] overflow-visible"}`}
       >
         <div className="flex h-full flex-col">
           {/* macOS Top Bar Header */}
@@ -156,7 +156,7 @@ export default function Sidebar() {
             )}
 
             {/* Brand Logo & Name */}
-            <div className={`flex flex-col items-center gap-1 ${!sidebarAbierto ? "lg:hidden" : ""}`}>
+            <div className={`flex flex-col items-center gap-1 ${!sidebarAbierto ? "hidden" : ""}`}>
               <div className="flex flex-col items-center w-full px-2 py-1.5 relative">
                 <div className="absolute inset-x-0 top-0 h-20 bg-radial-gradient from-amber-500/10 to-transparent blur-xl opacity-80 pointer-events-none" />
                 
@@ -256,7 +256,7 @@ export default function Sidebar() {
                                 <span className={`material-symbols-outlined shrink-0 text-base ${isSubActive ? "text-amber-600 dark:text-amber-500" : (subItem.iconColor || "text-amber-500")}`}>
                                   {subItem.icon || "arrow_right"}
                                 </span>
-                                <span className="whitespace-nowrap text-xs font-medium tracking-wide">
+                                <span className="whitespace-nowrap text-xs font-semibold tracking-wide">
                                   {subItem.label}
                                 </span>
                               </button>
@@ -393,7 +393,7 @@ export default function Sidebar() {
           </nav>
 
           {/* macOS Footer Status Card */}
-          <div className={`border-t border-slate-200/80 dark:border-[#334155]/60 p-3.5 ${!sidebarAbierto ? "lg:hidden" : ""}`}>
+          <div className={`border-t border-slate-200/80 dark:border-[#334155]/60 p-3.5 ${!sidebarAbierto ? "hidden" : ""}`}>
             <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/40 p-2.5 backdrop-blur-md">
               <div className="flex items-center justify-between">
                 <span className="text-[9.5px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-500">{t("common.status")}</span>

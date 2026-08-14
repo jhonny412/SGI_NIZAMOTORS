@@ -111,7 +111,17 @@ export default function ReportePage() {
   const datosFiltrados = useMemo(() => {
     let datos;
     if (config.type === "ventas") {
-      datos = ventas || [];
+      const rol = (usuarioActivo?.rol || "").toLowerCase();
+      const esAdmin = rol.includes("admin") || rol.includes("super");
+      const usuarioNombreNorm = (usuarioActivo?.nombre || "").trim().toLowerCase();
+
+      datos = esAdmin
+        ? (ventas || [])
+        : (ventas || []).filter((v) => {
+            const sellerName = String(v.vendedor || "").trim().toLowerCase();
+            return sellerName !== "" && sellerName === usuarioNombreNorm;
+          });
+
       if (metodoPago) datos = datos.filter((v) => v.metodoPago === metodoPago);
       if (clienteSearch)
         datos = datos.filter((v) =>
@@ -311,7 +321,7 @@ export default function ReportePage() {
               </span>
               <span className="text-sm font-black text-slate-800 dark:text-slate-100">
                 {config.type === "ventas"
-                  ? `S/. ${resumen.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                  ? `S/. ${resumen.total.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                   : resumen.total}
               </span>
             </div>
@@ -320,7 +330,7 @@ export default function ReportePage() {
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-500 dark:text-slate-400">{t("pages.reportes.total_profit")}:</span>
               <span className="text-sm font-black text-emerald-500 dark:text-emerald-400">
-                S/. {resumen.extra.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                S/. {resumen.extra.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
           )}
@@ -605,10 +615,10 @@ export default function ReportePage() {
                   <td className="text-slate-200">{v.cliente || "\u2014"}</td>
                   <td className="text-right font-mono">{v.cantidadTotal || 0}</td>
                   <td className="text-right font-mono text-slate-200">
-                    S/. {(Number(v.totalVenta) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    S/. {(Number(v.totalVenta) || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </td>
                   <td className="text-right font-mono text-emerald-400">
-                    S/. {(Number(v.utilidad) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    S/. {(Number(v.utilidad) || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </td>
                 </tr>
               ))

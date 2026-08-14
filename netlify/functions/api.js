@@ -36,6 +36,16 @@ function getPool() {
   return pool;
 }
 
+const tableColumnsCache = {};
+
+async function getValidColumns(dbPool, tableName) {
+  if (!tableColumnsCache[tableName]) {
+    const [rows] = await dbPool.query(`DESCRIBE \`${tableName}\``);
+    tableColumnsCache[tableName] = new Set(rows.map((r) => r.Field));
+  }
+  return tableColumnsCache[tableName];
+}
+
 export async function handler(event, _context) {
   // Manejo de CORS (Preflight OPTIONS)
   const headers = {
@@ -143,13 +153,30 @@ export async function handler(event, _context) {
       let resultData;
 
       if (currentAction === "create") {
-        // Si el id viene en 0 o null, lo removemos para que MySQL genere un auto_increment.
-        // Pero si el frontend manda un ID específico (> 0), lo respetamos.
-        if (payload.id === 0 || payload.id === null || payload.id === undefined) {
+        // Para tablas AUTO_INCREMENT (todas excepto 'logs'), eliminamos el id en peticiones 'create'
+        // para garantizar que MySQL asigne un id único y evitar conflictos con registros inactivados.
+        if (tableName !== "logs") {
+          delete payload.id;
+        } else if (payload.id === 0 || payload.id === null || payload.id === undefined) {
           delete payload.id;
         }
 
-        const keys = Object.keys(payload);
+        const validColumns = await getValidColumns(dbPool, tableName);
+        const filteredPayload = {};
+        for (const [key, val] of Object.entries(payload)) {
+          if (validColumns.has(key)) {
+            filteredPayload[key] = val;
+          }
+        }
+
+        const keys = Object.keys(filteredPayload);
+        if (keys.length === 0) {
+          return {
+            statusCode: 400,
+            headers,
+            body: JSON.stringify({ status: "error", message: "No hay campos válidos para insertar" })
+          };
+        }
 
         // Helper para normalizar valores (JSON objects -> string, ISO dates -> Date objects)
         const formatValue = (val) => {
@@ -161,7 +188,7 @@ export async function handler(event, _context) {
           return val;
         };
 
-        const mappedValues = Object.values(payload).map(formatValue);
+        const mappedValues = Object.values(filteredPayload).map(formatValue);
 
         const insertQuery = `INSERT INTO \`${tableName}\` (\`${keys.join("`, `")}\`) VALUES (${keys.map(() => "?").join(", ")})`;
         
@@ -192,12 +219,20 @@ export async function handler(event, _context) {
           };
         }
 
-        const keys = Object.keys(updateFields);
+        const validColumns = await getValidColumns(dbPool, tableName);
+        const filteredUpdateFields = {};
+        for (const [key, val] of Object.entries(updateFields)) {
+          if (validColumns.has(key)) {
+            filteredUpdateFields[key] = val;
+          }
+        }
+
+        const keys = Object.keys(filteredUpdateFields);
         if (keys.length === 0) {
           return {
             statusCode: 400,
             headers,
-            body: JSON.stringify({ status: "error", message: "No hay campos para actualizar" })
+            body: JSON.stringify({ status: "error", message: "No hay campos válidos para actualizar" })
           };
         }
 
@@ -210,7 +245,7 @@ export async function handler(event, _context) {
           return val;
         };
 
-        const mappedValues = Object.values(updateFields).map(formatValue);
+        const mappedValues = Object.values(filteredUpdateFields).map(formatValue);
 
         const setClause = keys.map(k => `\`${k}\` = ?`).join(", ");
         const updateQuery = `UPDATE \`${tableName}\` SET ${setClause} WHERE id = ?`;
@@ -277,7 +312,8 @@ export async function handler(event, _context) {
           };
 
           // 1. Insertar registro de venta
-          const vKeys = Object.keys(venta).filter(k => k !== "id");
+          const validColumns = await getValidColumns(dbPool, "ventas");
+          const vKeys = Object.keys(venta).filter(k => k !== "id" && validColumns.has(k));
           const vVals = vKeys.map(k => formatVal(venta[k]));
           const vQuery = `INSERT INTO ventas (\`${vKeys.join("`, `")}\`) VALUES (${vKeys.map(() => "?").join(", ")})`;
           const [vRes] = await conn.execute(vQuery, vVals);

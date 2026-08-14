@@ -4,6 +4,7 @@ import { useAuth } from "../context/useAuth";
 import { useUI } from "../context/useUI";
 import { useTranslation } from "react-i18next";
 import { SkeletonCard, SkeletonTable } from "../components/Skeleton";
+import vendedorBg from "../assets/vendedor-bg.jpg";
 
 const DIA_LABELS = ["LUN", "MAR", "MIE", "JUE", "VIE", "SAB", "DOM"];
 
@@ -87,8 +88,66 @@ export default function Dashboard() {
   const { setPaginaActiva } = useUI();
   const { usuarioActivo } = useAuth();
   const { t } = useTranslation();
-  const esAdmin = usuarioActivo?.rol?.toLowerCase() === "admin";
+  const esAdmin = usuarioActivo?.rol?.toLowerCase() === "admin" || usuarioActivo?.rol?.toLowerCase() === "superadmin";
+  const esVendedor = usuarioActivo?.rol?.toLowerCase() === "vendedor";
   const [periodoFlujo, setPeriodoFlujo] = useState("semana");
+
+  // ── Vista especial para Vendedor ──────────────────────────────
+  if (esVendedor) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center relative animate-fade-in -m-3 sm:-m-4 md:-m-6 lg:-m-8 min-h-[calc(100vh-4rem)] overflow-hidden">
+        {/* Background image */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src={vendedorBg}
+            alt="Niza Motors"
+            className="w-full h-full object-cover opacity-85 filter brightness-[0.88] contrast-[1.05]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/35 to-slate-950/20" />
+        </div>
+
+        {/* Welcome content card */}
+        <div className="relative z-10 text-center px-8 py-10 max-w-lg mx-4 rounded-3xl bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-[#334155] backdrop-blur-md shadow-2xl">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-500 mb-6 shadow-inner">
+            <span className="material-symbols-outlined text-4xl">storefront</span>
+          </div>
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-600 dark:text-amber-500 mb-2">
+            NIZA MOTORS — PUNTO DE VENTA
+          </p>
+          <h2 className="text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight mb-3">
+            ¡Bienvenido, {usuarioActivo?.nombre || "Vendedor"}!
+          </h2>
+          <p className="text-sm text-slate-600 dark:text-slate-300 font-medium mb-8 leading-relaxed">
+            Accede al módulo comercial para registrar ventas y gestionar créditos de clientes.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button
+              onClick={() => setPaginaActiva("ventas")}
+              className="flex items-center justify-center gap-2.5 px-6 py-3.5 bg-amber-500 text-slate-950 font-black text-sm rounded-xl shadow-lg shadow-amber-500/25 hover:bg-amber-400 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-lg">point_of_sale</span>
+              Registrar Venta
+            </button>
+            <button
+              onClick={() => setPaginaActiva("creditos")}
+              className="flex items-center justify-center gap-2.5 px-6 py-3.5 bg-slate-900 dark:bg-slate-800/90 text-white font-black text-sm rounded-xl border-2 border-amber-500/50 hover:bg-slate-800 hover:border-amber-400 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-md"
+            >
+              <span className="material-symbols-outlined text-lg text-amber-400">credit_card</span>
+              <span className="text-white font-black drop-shadow-xs">Gestionar Créditos</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="absolute bottom-6 left-0 right-0 text-center z-10 flex justify-center px-4">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] bg-slate-900 text-white dark:bg-slate-950 dark:text-slate-100 px-5 py-2 rounded-full border-2 border-slate-700 shadow-xl">
+            © 2026 NIZA MOTORS • SISTEMA DE GESTIÓN DE INVENTARIO
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   // Alert count
   const alertCount = stockBajo.length + stockAgotado.length;
@@ -153,12 +212,12 @@ export default function Dashboard() {
                 <div className="relative z-10">
                   <p className="text-[10px] font-black tracking-widest text-slate-400 uppercase">{t("pages.dashboard.inventory_cost")}</p>
                   <h3 className="text-3xl font-black text-amber-500 mt-2">
-                    S/. {valorInventario.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    S/. {valorInventario.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </h3>
                 </div>
                 <div className="mt-4 flex items-center gap-1.5 relative z-10">
                   <span className="text-emerald-400 text-xs font-bold">Valuación:</span>
-                  <span className="text-slate-400 text-xs">S/. {valorVentaInventario.toLocaleString(undefined, { minimumFractionDigits: 2 })} (venta)</span>
+                  <span className="text-slate-400 text-xs">S/. {valorVentaInventario.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (venta)</span>
                 </div>
               </div>
             ) : (

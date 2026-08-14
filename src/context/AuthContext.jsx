@@ -39,7 +39,7 @@ function loadUsuariosFromStorage() {
         .map(formatUsuario)
         .filter((u) => {
           const rol = u.rol.toLowerCase();
-          return u.id && u.nombre && (rol === "admin" || rol === "superadmin");
+          return u.id && u.nombre && (rol === "admin" || rol === "superadmin" || rol === "vendedor");
         });
       if (filtrados.length > 0) return filtrados;
     }
@@ -76,9 +76,17 @@ export function AuthProvider({ children }) {
       const token = generateSessionToken(userConHash);
       sessionStorage.setItem("sgi-auth-token", token);
 
-      writeLog({ usuario: user.nombre, accion: "Inicio de sesión seguro", modulo: "Seguridad", detalles: `Rol ${user.rol}` });
+      writeLog({ usuario: user.nombre, accion: "Inicio de sesión seguro", modulo: "Seguridad", detalles: `Rol ${user.rol}`, estado: "success" });
       return true;
     }
+
+    writeLog({
+      usuario: user ? user.nombre : `ID: ${id}`,
+      accion: "Intento fallido de inicio de sesión",
+      modulo: "Seguridad",
+      detalles: user ? "PIN ingresado incorrecto" : "Perfil de usuario no encontrado",
+      estado: "error"
+    });
 
     Swal.fire({ icon: "error", title: "PIN incorrecto", text: "El PIN ingresado no coincide con el perfil.", confirmButtonColor: "#f59e0b" });
     return false;

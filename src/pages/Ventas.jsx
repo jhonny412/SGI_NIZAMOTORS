@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useInventory } from "../context/useInventory";
+import { useAuth } from "../context/useAuth";
 import { useTranslation, Trans } from "react-i18next";
 import { SkeletonCard, SkeletonTable } from "../components/Skeleton";
 import VentaFormModal from "../components/VentaFormModal";
@@ -10,8 +11,12 @@ import Pagination from "../components/Pagination";
 import { matchSearch } from "../utils/search";
 
 export default function Ventas() {
-  const { ventas, productos, cargando, formatFecha } = useInventory();
+  const { ventas, productos, cargando, formatFecha, eliminarVenta } = useInventory();
+  const { usuarioActivo } = useAuth();
   const { t } = useTranslation();
+
+  const rol = (usuarioActivo?.rol || "").toLowerCase();
+  const esAdmin = rol.includes("admin") || rol.includes("super");
 
   const [busqueda, setBusqueda] = useState("");
   const [pagina, setPagina] = useState(1);
@@ -29,9 +34,17 @@ export default function Ventas() {
   const [pendingBoletaCode, setPendingBoletaCode] = useState(null);
   const itemsPorPagina = 8;
 
-  // Agrupar y enriquecer ventas (base de datos)
+  // Agrupar y enriquecer ventas (base de datos con control de visibilidad por rol)
   const salesGrouped = useMemo(() => {
-    return (ventas || []).map((venta) => {
+    const usuarioNombreNorm = (usuarioActivo?.nombre || "").trim().toLowerCase();
+    const ventasBase = esAdmin
+      ? (ventas || [])
+      : (ventas || []).filter((v) => {
+          const sellerName = String(v.vendedor || "").trim().toLowerCase();
+          return sellerName !== "" && sellerName === usuarioNombreNorm;
+        });
+
+    return ventasBase.map((venta) => {
       const enrichedItems = (venta.items || []).map((item) => {
         const prod = productos.find((p) => p.id === item.productoId);
         return {
@@ -49,10 +62,11 @@ export default function Ventas() {
         utilidad: Number(venta.utilidad) || 0,
         cantidadTotal: Number(venta.cantidadTotal) || 0,
         direccion: venta.direccion || "",
-        fecha: venta.fecha
+        fecha: venta.fecha,
+        vendedor: venta.vendedor || ""
       };
     });
-  }, [ventas, productos]);
+  }, [ventas, productos, esAdmin, usuarioActivo]);
 
   // Cierra todos los modales y limpia el estado
   const closeAll = useCallback(() => {
@@ -242,7 +256,7 @@ export default function Ventas() {
                     {t("pages.ventas.stats.total_revenue")}
                   </p>
                   <p className="mt-2.5 truncate text-2xl font-black text-emerald-400">
-                    S/. {kpis.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    S/. {kpis.totalRevenue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                   <p className="mt-1 text-xs text-slate-450 font-medium">
                     {t("pages.ventas.stats.total_revenue_desc")}
@@ -263,7 +277,7 @@ export default function Ventas() {
                     {t("pages.ventas.stats.avg_ticket")}
                   </p>
                   <p className="mt-2.5 truncate text-2xl font-black text-slate-100">
-                    S/. {kpis.avgTicket.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    S/. {kpis.avgTicket.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                   <p className="mt-1 text-xs text-slate-450 font-medium">
                     {t("pages.ventas.stats.avg_ticket_desc")}
@@ -284,7 +298,7 @@ export default function Ventas() {
                     {t("pages.ventas.stats.total_profit")}
                   </p>
                   <p className="mt-2.5 truncate text-2xl font-black text-amber-500">
-                    S/. {kpis.totalProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    S/. {kpis.totalProfit.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                   <p className="mt-1 text-xs text-slate-450 font-medium">
                     {t("pages.ventas.stats.total_profit_desc")}
@@ -380,6 +394,12 @@ export default function Ventas() {
                             {s.cliente.substring(s.cliente.indexOf("("))}
                           </span>
                         )}
+                        {esAdmin && s.vendedor && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded mt-1 border border-amber-500/20">
+                            <span className="material-symbols-outlined text-[11px]">person</span>
+                            {s.vendedor}
+                          </span>
+                        )}
                       </td>
                       <td className="px-5 py-4 text-xs font-semibold text-slate-400 uppercase tracking-wide">
                         {t(`sale.${s.metodoPago.toLowerCase()}`, { defaultValue: s.metodoPago })}
@@ -388,11 +408,11 @@ export default function Ventas() {
                         <span className="font-extrabold">{s.items.length} {s.items.length === 1 ? "ítem" : "ítems"}</span>
                         <span className="block text-[10px] text-slate-500 mt-0.5 font-medium">({s.cantidadTotal} u.)</span>
                       </td>
-                      <td className="px-5 py-4 text-right font-black text-amber-500 text-sm">
-                        S/. {s.totalVenta.toFixed(2)}
+                      <td className="px-5 py-4 text-right font-black text-amber-500 text-sm font-mono">
+                        S/. {s.totalVenta.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
-                      <td className={`px-5 py-4 text-right font-bold text-xs ${s.utilidad >= 0 ? "text-emerald-400" : "text-red-400"}`}>
-                        S/. {s.utilidad.toFixed(2)}
+                      <td className={`px-5 py-4 text-right font-bold text-xs font-mono ${s.utilidad >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                        S/. {s.utilidad.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
                       <td className="px-5 py-4 text-center">
                         <div className="flex items-center justify-center gap-2">
@@ -405,7 +425,17 @@ export default function Ventas() {
                           >
                             <span className="material-symbols-outlined text-base">visibility</span>
                             <span>{t("pages.productos.actions.view")}</span>
-                           </button>
+                          </button>
+                          {esAdmin && (
+                            <button
+                              onClick={() => eliminarVenta(s.id)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 transition-all text-xs font-bold cursor-pointer"
+                              title="Eliminar venta y revertir stock"
+                            >
+                              <span className="material-symbols-outlined text-base">delete</span>
+                              <span>Eliminar</span>
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

@@ -15,7 +15,7 @@ export default function Productos() {
   const { productos, eliminarProducto, editarProducto, proveedores, marcas, cargando } = useInventory();
   const { usuarioActivo } = useAuth();
   const { t } = useTranslation();
-  const esAdmin = usuarioActivo?.rol?.toLowerCase() === "admin";
+  const esAdmin = usuarioActivo?.rol?.toLowerCase() === "admin" || usuarioActivo?.rol?.toLowerCase() === "superadmin";
 
   const [busqueda, setBusqueda] = useState("");
   const [filtroProveedor, setFiltroProveedor] = useState("");
@@ -160,7 +160,7 @@ export default function Productos() {
     setZoomActive(false);
   };
 
-  const money = (n) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const money = (n) => n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -364,7 +364,7 @@ export default function Productos() {
           <div>
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Valor Inventario</p>
             <p className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
-              S/. {stats.valorTotal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+              S/. {stats.valorTotal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           </div>
         </div>
@@ -547,7 +547,7 @@ export default function Productos() {
               {imagenResultado && (
                 <button
                   onClick={() => {
-                    editarProducto({ ...imagenModalProducto, imagenUrl: imagenResultado });
+                    editarProducto({ ...imagenModalProducto, imagenUrl: imagenResultado }, false, "Vincular Imagen Producto");
                     setImagenModalProducto(null);
                     Swal.fire({ icon: 'success', title: 'Imagen vinculada', text: 'La imagen se ha guardado en el archivo.', timer: 2000, showConfirmButton: false });
                   }}

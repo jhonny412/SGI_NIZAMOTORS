@@ -24,6 +24,7 @@ export default function Layout({ children }) {
     "reporte-ingresos": t("pages.reportes.ingresos.title"),
     "reporte-salidas": t("pages.reportes.salidas.title"),
     "reporte-kardex": t("pages.reportes.kardex.title"),
+    usuarios: "Gestión de Usuarios",
   };
 
   return (

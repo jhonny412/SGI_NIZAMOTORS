@@ -229,9 +229,10 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
           .print-only-ticket {
             display: block !important;
             position: static !important;
-            width: 85mm !important;
-            max-width: 85mm !important;
-            padding: 5px 2mm 3mm 20px !important;
+            width: 80mm !important;
+            max-width: 80mm !important;
+            box-sizing: border-box !important;
+            padding: 7mm 4mm 6mm 5mm !important;
             margin: 0 !important;
             border: none !important;
             box-shadow: none !important;
@@ -546,13 +547,13 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
           <div style={{ fontSize: "9.5px", lineHeight: "1.3" }}>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
               <span>SEÑORES:</span>
-              <span style={{ fontWeight: "bold", textTransform: "uppercase", textAlign: "right", maxWidth: "170px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <span style={{ fontWeight: "bold", textTransform: "uppercase", textAlign: "right", maxWidth: "145px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {clientInfo.nombre}
               </span>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
               <span>DIRECCIÓN:</span>
-              <span style={{ textTransform: "uppercase", textAlign: "right", maxWidth: "170px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <span style={{ textTransform: "uppercase", textAlign: "right", maxWidth: "145px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {venta.direccion || "-"}
               </span>
             </div>

@@ -16,6 +16,7 @@ const Categorias   = lazy(() => import("../pages/Categorias"));
 const Creditos     = lazy(() => import("../pages/Creditos"));
 const Auditoria    = lazy(() => import("../pages/Auditoria"));
 const ReportePage  = lazy(() => import("../pages/ReportePage"));
+const GestionUsuarios = lazy(() => import("../pages/GestionUsuarios"));
 
 
 /**
@@ -143,7 +144,7 @@ export const ROUTES = {
   "reporte-ventas": {
     id: "reporte-ventas",
     component: ReportePage,
-    roles: ["admin", "vendedor"],
+    roles: ["admin"],
     labelKey: "menu.reporte_ventas",
     icon: "analytics",
     iconColor: "text-purple-500 dark:text-purple-400",
@@ -179,7 +180,7 @@ export const ROUTES = {
   "reporte-kardex": {
     id: "reporte-kardex",
     component: ReportePage,
-    roles: ["admin", "vendedor"],
+    roles: ["admin"],
     labelKey: "menu.reporte_kardex",
     icon: "timeline",
     iconColor: "text-amber-500 dark:text-amber-400",
@@ -187,5 +188,17 @@ export const ROUTES = {
     groupLabelKey: "menu.reportes",
     groupIcon: "insights",
     groupColor: "text-purple-500 dark:text-purple-400"
+  },
+  usuarios: {
+    id: "usuarios",
+    component: GestionUsuarios,
+    roles: ["admin"],
+    labelKey: "menu.usuarios",
+    icon: "group",
+    iconColor: "text-cyan-500 dark:text-cyan-400",
+    group: "administracion",
+    groupLabelKey: "menu.administracion",
+    groupIcon: "admin_panel_settings",
+    groupColor: "text-cyan-500 dark:text-cyan-400"
   },
 };

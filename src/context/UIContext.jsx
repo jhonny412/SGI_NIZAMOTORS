@@ -5,7 +5,15 @@ export const UIContext = createContext();
 export function UIProvider({ children }) {
   const [paginaActiva, setPaginaActiva] = useState("dashboard");
   const [sidebarAbierto, setSidebarAbierto] = useState(true);
-  const [tema, setTema] = useState(() => localStorage.getItem("sgi-theme") || "dark");
+  const [tema, setTema] = useState(() => {
+    const hasInitialized = localStorage.getItem("sgi-theme-v2");
+    if (!hasInitialized) {
+      localStorage.setItem("sgi-theme-v2", "true");
+      localStorage.setItem("sgi-theme", "light");
+      return "light";
+    }
+    return localStorage.getItem("sgi-theme") || "light";
+  });
 
   useEffect(() => {
     const isDark = tema === "dark";
