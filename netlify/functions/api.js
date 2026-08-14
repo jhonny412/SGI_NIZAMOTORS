@@ -28,6 +28,7 @@ function getPool() {
       waitForConnections: true,
       connectionLimit: 10,
       queueLimit: 0,
+      dateStrings: true,
       ssl: {
         rejectUnauthorized: false // Requerido para la conexión SSL segura con Aiven
       }
@@ -44,6 +45,20 @@ async function getValidColumns(dbPool, tableName) {
     tableColumnsCache[tableName] = new Set(rows.map((r) => r.Field));
   }
   return tableColumnsCache[tableName];
+}
+
+const pad = (n) => String(n).padStart(2, '0');
+
+// Helper para normalizar valores (JSON objects -> string, ISO dates -> local DATETIME string)
+function formatValue(val) {
+  if (val !== null && typeof val === "object") return JSON.stringify(val);
+  if (typeof val === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(val)) {
+    const d = new Date(val);
+    if (!isNaN(d.getTime())) {
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    }
+  }
+  return val;
 }
 
 export async function handler(event, _context) {
@@ -178,16 +193,6 @@ export async function handler(event, _context) {
           };
         }
 
-        // Helper para normalizar valores (JSON objects -> string, ISO dates -> Date objects)
-        const formatValue = (val) => {
-          if (val !== null && typeof val === "object") return JSON.stringify(val);
-          if (typeof val === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(val)) {
-            const d = new Date(val);
-            return isNaN(d.getTime()) ? val : d;
-          }
-          return val;
-        };
-
         const mappedValues = Object.values(filteredPayload).map(formatValue);
 
         const insertQuery = `INSERT INTO \`${tableName}\` (\`${keys.join("`, `")}\`) VALUES (${keys.map(() => "?").join(", ")})`;
@@ -235,15 +240,6 @@ export async function handler(event, _context) {
             body: JSON.stringify({ status: "error", message: "No hay campos válidos para actualizar" })
           };
         }
-
-        const formatValue = (val) => {
-          if (val !== null && typeof val === "object") return JSON.stringify(val);
-          if (typeof val === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(val)) {
-            const d = new Date(val);
-            return isNaN(d.getTime()) ? val : d;
-          }
-          return val;
-        };
 
         const mappedValues = Object.values(filteredUpdateFields).map(formatValue);
 
@@ -302,19 +298,10 @@ export async function handler(event, _context) {
         try {
           await conn.beginTransaction();
 
-          const formatVal = (val) => {
-            if (val !== null && typeof val === "object") return JSON.stringify(val);
-            if (typeof val === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(val)) {
-              const d = new Date(val);
-              return isNaN(d.getTime()) ? val : d;
-            }
-            return val;
-          };
-
           // 1. Insertar registro de venta
           const validColumns = await getValidColumns(dbPool, "ventas");
           const vKeys = Object.keys(venta).filter(k => k !== "id" && validColumns.has(k));
-          const vVals = vKeys.map(k => formatVal(venta[k]));
+          const vVals = vKeys.map(k => formatValue(venta[k]));
           const vQuery = `INSERT INTO ventas (\`${vKeys.join("`, `")}\`) VALUES (${vKeys.map(() => "?").join(", ")})`;
           const [vRes] = await conn.execute(vQuery, vVals);
           const ventaId = vRes.insertId;
@@ -324,7 +311,7 @@ export async function handler(event, _context) {
             for (const mov of movimientos) {
               const { id: _mId, ...movFields } = mov;
               const mKeys = Object.keys(movFields);
-              const mVals = mKeys.map(k => formatVal(movFields[k]));
+              const mVals = mKeys.map(k => formatValue(movFields[k]));
               const mQuery = `INSERT INTO movimientos (\`${mKeys.join("`, `")}\`) VALUES (${mKeys.map(() => "?").join(", ")})`;
               await conn.execute(mQuery, mVals);
 
