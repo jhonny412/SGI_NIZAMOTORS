@@ -1,6 +1,19 @@
+export function getLocalDateTimeString(date = new Date()) {
+  const d = date instanceof Date ? date : new Date(date);
+  if (isNaN(d.getTime())) return "";
+  const pad = (n) => String(n).padStart(2, "0");
+  const year = d.getFullYear();
+  const month = pad(d.getMonth() + 1);
+  const day = pad(d.getDate());
+  const hours = pad(d.getHours());
+  const minutes = pad(d.getMinutes());
+  const seconds = pad(d.getSeconds());
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
 export function getDateOnly(fecha) {
   if (!fecha) return "";
-  return fecha.includes("T") ? fecha.split("T")[0] : fecha;
+  return fecha.split(/[T ]/)[0];
 }
 
 export function filterByDateRange(items, fechaDesde, fechaHasta, dateField = "fecha") {

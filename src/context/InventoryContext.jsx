@@ -371,6 +371,12 @@ export function InventoryProvider({ children }) {
       return `${dd}/${mm}/${yyyy} 00:00:00`;
     }
 
+    if (/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}/.test(str) && !str.endsWith("Z") && !/[+-]\d{2}:\d{2}$/.test(str)) {
+      const [datePart, timePart] = str.replace("T", " ").split(" ");
+      const [yyyy, mm, dd] = datePart.split("-");
+      return `${dd}/${mm}/${yyyy} ${timePart.substring(0, 8)}`;
+    }
+
     let d = new Date(str);
     if (isNaN(d.getTime())) {
       let cleanStr = str.replace(/p\.\s*m\./i, "PM").replace(/a\.\s*m\./i, "AM");

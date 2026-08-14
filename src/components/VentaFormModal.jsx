@@ -3,6 +3,7 @@ import { useInventory } from "../context/useInventory";
 import { useAuth } from "../context/useAuth";
 import { useTranslation } from "react-i18next";
 import Swal from "sweetalert2";
+import { getLocalDateTimeString } from "../utils/dateFilter";
 
 export default function VentaFormModal({ abierto, onCerrar, onVentaRegistrada }) {
   const { productos, movimientos, ventas, agregarVenta } = useInventory();
@@ -268,7 +269,7 @@ export default function VentaFormModal({ abierto, onCerrar, onVentaRegistrada })
 
     const nuevaVenta = {
       boleta: boletaCode,
-      fecha: new Date().toISOString(),
+      fecha: getLocalDateTimeString(),
       cliente: `${finalCliente}${finalDoc}`,
       metodoPago: metodoPago,
       totalVenta: totalGeneral,

@@ -5,6 +5,7 @@ import { fetchSheet } from "../services/api";
 import Pagination from "../components/Pagination";
 import SortableTh from "../components/SortableTh";
 import { matchSearch } from "../utils/search";
+import { getLocalDateTimeString } from "../utils/dateFilter";
 
 export default function Auditoria() {
   const { formatFecha } = useInventory();
@@ -28,7 +29,7 @@ export default function Auditoria() {
       const fLogs = data.map(log => ({
         ...log,
         id: Number(log.id) || Date.now(),
-        fecha: log.fecha || new Date().toISOString()
+        fecha: log.fecha || getLocalDateTimeString()
       }));
       setLogs(fLogs);
     } catch (error) {

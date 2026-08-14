@@ -1,4 +1,5 @@
 import { ENDPOINTS } from "../config/endpoints";
+import { getLocalDateTimeString } from "./dateFilter";
 
 const API_URL = ENDPOINTS.INVENTORY_API_URL;
 
@@ -193,7 +194,7 @@ export async function writeLog({ usuario = "Sistema", accion, modulo, detalles =
     sheet: "Logs",
     action: "create",
     id,
-    fecha: new Date().toISOString(),
+    fecha: getLocalDateTimeString(),
     usuario,
     accion,
     modulo,

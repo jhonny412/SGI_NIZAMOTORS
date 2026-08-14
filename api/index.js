@@ -56,10 +56,14 @@ const pad = (n) => String(n).padStart(2, '0');
 
 function formatValue(val) {
   if (val !== null && typeof val === "object") return JSON.stringify(val);
-  if (typeof val === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(val)) {
-    const d = new Date(val);
-    if (!isNaN(d.getTime())) {
-      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  if (typeof val === "string" && /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}/.test(val)) {
+    if (val.endsWith("Z") || /[+-]\d{2}:\d{2}$/.test(val)) {
+      const d = new Date(val);
+      if (!isNaN(d.getTime())) {
+        return d.toLocaleString("sv-SE", { timeZone: "America/Lima" }).replace("T", " ");
+      }
+    } else {
+      return val.replace("T", " ").substring(0, 19);
     }
   }
   return val;

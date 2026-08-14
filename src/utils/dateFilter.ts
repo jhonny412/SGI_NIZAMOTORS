@@ -1,13 +1,31 @@
 /**
- * Extracts the date-only portion of an ISO datetime string.
- * If the string contains a 'T', splits and returns the date part.
+ * Formats a Date object into local date-time string format 'YYYY-MM-DD HH:mm:ss'.
  *
- * @param fecha - ISO datetime or date string
+ * @param date - Date object or date input
+ * @returns Local datetime string 'YYYY-MM-DD HH:mm:ss'
+ */
+export function getLocalDateTimeString(date: Date | string | number = new Date()): string {
+  const d = date instanceof Date ? date : new Date(date);
+  if (isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const year = d.getFullYear();
+  const month = pad(d.getMonth() + 1);
+  const day = pad(d.getDate());
+  const hours = pad(d.getHours());
+  const minutes = pad(d.getMinutes());
+  const seconds = pad(d.getSeconds());
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
+/**
+ * Extracts the date-only portion of a datetime string ('YYYY-MM-DD').
+ *
+ * @param fecha - Datetime or date string
  * @returns Date string in 'YYYY-MM-DD' format, or empty string if falsy
  */
 export function getDateOnly(fecha: string | null | undefined): string {
   if (!fecha) return "";
-  return fecha.includes("T") ? fecha.split("T")[0] : fecha;
+  return fecha.split(/[T ]/)[0];
 }
 
 /**

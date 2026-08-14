@@ -1,6 +1,7 @@
 import { postAction } from "./api";
 import { calculatePricing } from "../utils/pricing";
 import { writeLog } from "../utils/logger";
+import { getLocalDateTimeString } from "../utils/dateFilter";
 
 // ─────────────────────────────────────────────────────────────
 // FORMATTERS (Data Translation Layer)
@@ -357,7 +358,7 @@ export async function createMovement({ productoId, tipo, cantidad, motivo }, cur
 
   const stockAnterior = producto.stock;
   const stockNuevo = tipo === "entrada" ? stockAnterior + cantidad : stockAnterior - cantidad;
-  const today = new Date().toISOString();
+  const today = getLocalDateTimeString();
   const nuevoMov = {
     productoId, tipo, cantidad,
     fecha: today,
@@ -386,7 +387,7 @@ export async function createMovement({ productoId, tipo, cantidad, motivo }, cur
 // ─────────────────────────────────────────────────────────────
 
 export async function createTransfer({ tiendaVecina, items, notas }, currentProducts, currentMovements, currentTransfers, userActive) {
-  const today = new Date().toISOString();
+  const today = getLocalDateTimeString();
 
   // Validaciones
   for (const item of items) {
@@ -484,7 +485,7 @@ export async function createTransfer({ tiendaVecina, items, notas }, currentProd
 export async function resolveTransfer(id, resolucion, currentTransfers, currentProducts, currentMovements, userActive) {
   const traslado = currentTransfers.find((t) => t.id === id);
   if (!traslado) throw new Error("transfer_not_found");
-  const today = new Date().toISOString();
+  const today = getLocalDateTimeString();
 
   const itemsParaResolver = traslado.items && traslado.items.length > 0
     ? traslado.items
@@ -558,7 +559,7 @@ export async function resolveTransfer(id, resolucion, currentTransfers, currentP
 
 export async function createSale(venta, currentProducts, currentMovements, currentSales, userActive) {
   if (!venta.items || venta.items.length === 0) throw new Error("empty_cart");
-  const today = new Date().toISOString();
+  const today = getLocalDateTimeString();
 
   // Validar stock
   for (const item of venta.items) {
