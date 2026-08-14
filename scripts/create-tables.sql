@@ -133,10 +133,9 @@ CREATE TABLE IF NOT EXISTS `ventas` (
 
 -- ----------------------------------------------------------------
 -- Tabla: logs
--- (id = Date.now() generado por el cliente, no AUTO_INCREMENT)
 -- ----------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `logs` (
-  `id` BIGINT NOT NULL,
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
   `fecha` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `usuario` VARCHAR(255) NOT NULL DEFAULT '',
   `accion` VARCHAR(500) NOT NULL DEFAULT '',

@@ -52,10 +52,14 @@ const pad = (n) => String(n).padStart(2, '0');
 // Helper para normalizar valores (JSON objects -> string, ISO dates -> local DATETIME string)
 function formatValue(val) {
   if (val !== null && typeof val === "object") return JSON.stringify(val);
-  if (typeof val === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(val)) {
-    const d = new Date(val);
-    if (!isNaN(d.getTime())) {
-      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  if (typeof val === "string" && /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}/.test(val)) {
+    if (val.endsWith("Z") || /[+-]\d{2}:\d{2}$/.test(val)) {
+      const d = new Date(val);
+      if (!isNaN(d.getTime())) {
+        return d.toLocaleString("sv-SE", { timeZone: "America/Lima" }).replace("T", " ");
+      }
+    } else {
+      return val.replace("T", " ").substring(0, 19);
     }
   }
   return val;
@@ -168,13 +172,7 @@ export async function handler(event, _context) {
       let resultData;
 
       if (currentAction === "create") {
-        // Para tablas AUTO_INCREMENT (todas excepto 'logs'), eliminamos el id en peticiones 'create'
-        // para garantizar que MySQL asigne un id único y evitar conflictos con registros inactivados.
-        if (tableName !== "logs") {
-          delete payload.id;
-        } else if (payload.id === 0 || payload.id === null || payload.id === undefined) {
-          delete payload.id;
-        }
+        delete payload.id;
 
         const validColumns = await getValidColumns(dbPool, tableName);
         const filteredPayload = {};
@@ -200,15 +198,20 @@ export async function handler(event, _context) {
         try {
           const [insertResult] = await dbPool.execute(insertQuery, mappedValues);
           
-          // Devolvemos el registro recién creado
-          const createdId = payload.id || insertResult.insertId;
+          const createdId = insertResult.insertId;
           const [insertedRows] = await dbPool.query(`SELECT * FROM \`${tableName}\` WHERE id = ?`, [createdId]);
-          resultData = insertedRows[0];
+          resultData = insertedRows[0] || { id: createdId, ...filteredPayload };
         } catch (dbError) {
-          if (dbError.code === 'ER_DUP_ENTRY' && tableName === 'logs' && payload.id) {
-            console.log(`[API] Log ID ${payload.id} ya existe, omitiendo inserción.`);
-            const [existingRows] = await dbPool.query(`SELECT * FROM \`${tableName}\` WHERE id = ?`, [payload.id]);
-            resultData = existingRows[0] || payload;
+          if (tableName === "logs" && (dbError.code === "ER_NO_DEFAULT_FOR_FIELD" || dbError.errno === 1364)) {
+            const fallbackId = Date.now() + Math.floor(Math.random() * 10000);
+            filteredPayload.id = fallbackId;
+            const retryKeys = Object.keys(filteredPayload);
+            const retryValues = Object.values(filteredPayload).map(formatValue);
+            const retryQuery = `INSERT INTO \`${tableName}\` (\`${retryKeys.join("`, `")}\`) VALUES (${retryKeys.map(() => "?").join(", ")})`;
+            const [retryResult] = await dbPool.execute(retryQuery, retryValues);
+            const createdId = fallbackId || retryResult.insertId;
+            const [insertedRows] = await dbPool.query(`SELECT * FROM \`${tableName}\` WHERE id = ?`, [createdId]);
+            resultData = insertedRows[0] || { id: createdId, ...filteredPayload };
           } else {
             throw dbError;
           }

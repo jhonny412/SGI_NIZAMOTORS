@@ -76,11 +76,11 @@ export function AuthProvider({ children }) {
       const token = generateSessionToken(userConHash);
       sessionStorage.setItem("sgi-auth-token", token);
 
-      writeLog({ usuario: user.nombre, accion: "Inicio de sesión seguro", modulo: "Seguridad", detalles: `Rol ${user.rol}`, estado: "success" });
+      await writeLog({ usuario: user.nombre, accion: "Inicio de sesión seguro", modulo: "Seguridad", detalles: `Rol ${user.rol}`, estado: "success" });
       return true;
     }
 
-    writeLog({
+    await writeLog({
       usuario: user ? user.nombre : `ID: ${id}`,
       accion: "Intento fallido de inicio de sesión",
       modulo: "Seguridad",

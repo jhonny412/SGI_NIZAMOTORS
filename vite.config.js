@@ -3,9 +3,9 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { config as loadEnv } from 'dotenv'
 
-// Carga DATABASE_URL y otras variables server-side de .env.local
-// VITE_* ya las carga Vite automáticamente para el cliente
+// Carga DATABASE_URL y otras variables server-side de .env.local y .env
 loadEnv({ path: '.env.local' })
+loadEnv({ path: '.env' })
 
 /**
  * Plugin local de API: intercepta peticiones a /api durante `npm run dev`
@@ -26,7 +26,7 @@ function localApiPlugin() {
         })
 
       server.middlewares.use(async (req, res, next) => {
-        if (!req.url?.startsWith('/api')) return next()
+        if (!req.url?.startsWith('/api') && !req.url?.startsWith('/.netlify/functions/api')) return next()
 
         const handler = await handlerPromise
         if (!handler) {

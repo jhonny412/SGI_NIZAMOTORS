@@ -67,31 +67,32 @@ export async function resolveClientIp() {
 
   // Intentar recuperar IP en caché de localStorage
   const ipGuardada = leerStorageString(KEY_IP_CACHE);
+  if (ipGuardada) {
+    _cachedIp = ipGuardada;
+    // Actualizar en segundo plano sin ralentizar
+    fetch("https://api.ipify.org?format=json", { signal: AbortSignal.timeout(3000) })
+      .then(r => r.json())
+      .then(data => {
+        if (data.ip) {
+          _cachedIp = data.ip;
+          try { localStorage.setItem(KEY_IP_CACHE, data.ip); } catch {}
+        }
+      })
+      .catch(() => {});
+    return _cachedIp;
+  }
 
   try {
     const resp = await fetch("https://api.ipify.org?format=json", {
-      signal: AbortSignal.timeout(5000) // 5 segundos máximo
+      signal: AbortSignal.timeout(3000)
     });
     const data = await resp.json();
-    const ip = data.ip || "desconocida";
-
-    // Guardar en caché de módulo y en localStorage
+    const ip = data.ip || "127.0.0.1";
     _cachedIp = ip;
-    try {
-      localStorage.setItem(KEY_IP_CACHE, ip);
-    } catch { /* sin storage */ }
-
-    console.log(`[Logger] IP pública detectada: ${ip}`);
+    try { localStorage.setItem(KEY_IP_CACHE, ip); } catch {}
     return ip;
   } catch {
-    // Sin internet: usar la última IP guardada
-    if (ipGuardada) {
-      _cachedIp = `${ipGuardada} [caché]`;
-      console.warn(`[Logger] No se pudo obtener IP. Usando última conocida: ${ipGuardada}`);
-    } else {
-      _cachedIp = "desconocida";
-      console.warn("[Logger] No se pudo obtener la IP y no hay caché previa.");
-    }
+    _cachedIp = "127.0.0.1";
     return _cachedIp;
   }
 }
@@ -134,6 +135,12 @@ async function enviarASheets(logEntry) {
   });
   if (!response.ok) {
     throw new Error(`HTTP error writing log: ${response.status}`);
+  }
+  const text = await response.text().catch(() => "");
+  let result = {};
+  try { result = JSON.parse(text); } catch {}
+  if (result.status && result.status !== "success") {
+    throw new Error(`API error writing log: ${result.message || "Unknown error"}`);
   }
 }
 

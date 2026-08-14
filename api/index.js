@@ -139,11 +139,7 @@ export default async function handler(req, res) {
       let resultData;
 
       if (currentAction === "create") {
-        if (tableName !== "logs") {
-          delete payload.id;
-        } else if (payload.id === 0 || payload.id === null || payload.id === undefined) {
-          delete payload.id;
-        }
+        delete payload.id;
 
         const validColumns = await getValidColumns(dbPool, tableName);
         const filteredPayload = {};
@@ -163,13 +159,20 @@ export default async function handler(req, res) {
         
         try {
           const [insertResult] = await dbPool.execute(insertQuery, mappedValues);
-          const createdId = payload.id || insertResult.insertId;
+          const createdId = insertResult.insertId;
           const [insertedRows] = await dbPool.query(`SELECT * FROM \`${tableName}\` WHERE id = ?`, [createdId]);
-          resultData = insertedRows[0];
+          resultData = insertedRows[0] || { id: createdId, ...filteredPayload };
         } catch (dbError) {
-          if (dbError.code === 'ER_DUP_ENTRY' && tableName === 'logs' && payload.id) {
-            const [existingRows] = await dbPool.query(`SELECT * FROM \`${tableName}\` WHERE id = ?`, [payload.id]);
-            resultData = existingRows[0] || payload;
+          if (tableName === "logs" && (dbError.code === "ER_NO_DEFAULT_FOR_FIELD" || dbError.errno === 1364)) {
+            const fallbackId = Date.now() + Math.floor(Math.random() * 10000);
+            filteredPayload.id = fallbackId;
+            const retryKeys = Object.keys(filteredPayload);
+            const retryValues = Object.values(filteredPayload).map(formatValue);
+            const retryQuery = `INSERT INTO \`${tableName}\` (\`${retryKeys.join("`, `")}\`) VALUES (${retryKeys.map(() => "?").join(", ")})`;
+            const [retryResult] = await dbPool.execute(retryQuery, retryValues);
+            const createdId = fallbackId || retryResult.insertId;
+            const [insertedRows] = await dbPool.query(`SELECT * FROM \`${tableName}\` WHERE id = ?`, [createdId]);
+            resultData = insertedRows[0] || { id: createdId, ...filteredPayload };
           } else {
             throw dbError;
           }
