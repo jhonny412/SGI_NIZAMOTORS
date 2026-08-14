@@ -18,9 +18,14 @@ let pool;
 
 function getPool() {
   if (!pool) {
-    const connectionUri = process.env.DATABASE_URL;
+    let connectionUri = process.env.DATABASE_URL;
     if (!connectionUri) {
       throw new Error("DATABASE_URL variable de entorno no configurada.");
+    }
+
+    // Reemplazo automático: Si la URI apunta a /defaultdb, redirigir a /NIZA_MOTORS
+    if (connectionUri.includes('/defaultdb')) {
+      connectionUri = connectionUri.replace('/defaultdb', '/NIZA_MOTORS');
     }
     
     pool = mysql.createPool({
