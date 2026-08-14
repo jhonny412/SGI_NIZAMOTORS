@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback, useEffect } from "react";
+import { useMemo, useState, useCallback } from "react";
 import Swal from "sweetalert2";
 import { useInventory } from "../context/useInventory";
 import { useAuth } from "../context/useAuth";
@@ -78,13 +78,9 @@ export default function ReportePage() {
   const [movTipoFilter, setMovTipoFilter] = useState("todos");
   const [motivoSearch, setMotivoSearch] = useState("");
 
-  const [showFilterModal, setShowFilterModal] = useState(true);
+  const [showFilterModal, setShowFilterModal] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [pdfUrl, setPdfUrl] = useState("");
-
-  useEffect(() => {
-    setShowFilterModal(true);
-  }, [paginaActiva]);
 
   const getProducto = useCallback((id) => productos.find((p) => p.id === id), [productos]);
 
