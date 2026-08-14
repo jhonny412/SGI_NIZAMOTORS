@@ -499,21 +499,32 @@ export async function createSale(venta, currentProducts, currentMovements, curre
   const ventaParaDB = { ...nuevaVenta };
   delete ventaParaDB.vendedor;
 
-  // Ejecutar venta, movimientos y actualización de stock en una sola transacción SQL atómica en backend
-  await postAction("Ventas", "procesarVenta", {
-    venta: {
-      ...ventaParaDB,
-      items: JSON.stringify(nuevaVenta.items)
-    },
-    movimientos: nuevosMovimientos
-  });
+  try {
+    // Ejecutar venta, movimientos y actualización de stock en una sola transacción SQL atómica en backend
+    await postAction("Ventas", "procesarVenta", {
+      venta: {
+        ...ventaParaDB,
+        items: JSON.stringify(nuevaVenta.items)
+      },
+      movimientos: nuevosMovimientos
+    });
 
-  writeLog({
-    usuario: userActive?.nombre || "Sistema",
-    accion: "Registrar Venta",
-    modulo: "Ventas",
-    detalles: `ID Venta: ${nuevaVenta.id}, Boleta: ${venta.boleta}, Cliente: ${venta.cliente}, Total: S/. ${venta.totalVenta}`
-  });
+    writeLog({
+      usuario: userActive?.nombre || "Sistema",
+      accion: "Registrar Venta",
+      modulo: "Ventas",
+      detalles: `ID Venta: ${nuevaVenta.id}, Boleta: ${venta.boleta}, Cliente: ${venta.cliente}, Total: S/. ${venta.totalVenta}`
+    });
+  } catch (err) {
+    writeLog({
+      usuario: userActive?.nombre || "Sistema",
+      accion: "Error Registrar Venta",
+      modulo: "Ventas",
+      detalles: `Error: ${err.message}. Boleta: ${venta.boleta}, Cliente: ${venta.cliente}, Total: S/. ${venta.totalVenta}`,
+      estado: "error"
+    });
+    throw err;
+  }
 
   return { nuevaVenta, nuevosMovimientos, productosActualizados };
 }

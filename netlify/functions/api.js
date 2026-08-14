@@ -267,7 +267,14 @@ export async function handler(event, _context) {
         try {
           await conn.beginTransaction();
 
-          const formatVal = (val) => (val !== null && typeof val === "object" ? JSON.stringify(val) : val);
+          const formatVal = (val) => {
+            if (val !== null && typeof val === "object") return JSON.stringify(val);
+            if (typeof val === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(val)) {
+              const d = new Date(val);
+              return isNaN(d.getTime()) ? val : d;
+            }
+            return val;
+          };
 
           // 1. Insertar registro de venta
           const vKeys = Object.keys(venta).filter(k => k !== "id");
