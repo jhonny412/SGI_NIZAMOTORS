@@ -77,6 +77,9 @@
       "title": "Product Management",
       "found": "{{count}} products found",
       "new": "New Product",
+      "export_excel": "Export to Excel",
+      "export_success_title": "Export Successful",
+      "export_success_text": "Products exported successfully to Excel.",
       "search_placeholder": "Search by description, code, OEM...",
       "all_suppliers": "All suppliers",
       "all_stock": "All stock",
@@ -230,6 +233,11 @@
       "title": "Sales Management",
       "registered": "{{count}} sales registered",
       "new": "Record Sale",
+      "export_excel": "Export to Excel",
+      "export_success_title": "Export Successful",
+      "export_success_text": "Sales exported successfully to Excel.",
+      "export_qty_total": "Total Qty. (units)",
+      "export_seller": "Seller",
       "search_placeholder": "Search by product, customer or notes...",
       "stats": {
         "total_sales": "Sales Made",
@@ -301,6 +309,9 @@
       "preview_subtitle": "Review the document before downloading",
       "download_pdf": "Download PDF",
       "close_preview": "Close preview",
+      "export_sheet": "Movements",
+      "export_success_title": "Export Successful",
+      "export_success_text": "Records exported successfully to Excel.",
       "ventas": {
         "title": "Sales Report"
       },

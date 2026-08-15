@@ -162,6 +162,217 @@ export default function Productos() {
 
   const money = (n) => n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+  const handleExportExcel = async () => {
+    try {
+      const [exceljsModule, fileSaverModule] = await Promise.all([
+        import("exceljs"),
+        import("file-saver")
+      ]);
+
+      const ExcelJS = exceljsModule.default || exceljsModule;
+      const saveAs = fileSaverModule.saveAs || fileSaverModule.default || fileSaverModule;
+
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet(t("pages.productos.title") || "Productos");
+
+      // Column definitions mapped exactly to the grid's columns
+      const columns = [
+        { header: t("pages.productos.table.id"), key: "id", width: 10 },
+        { header: t("pages.productos.table.oem"), key: "oem", width: 18 },
+        { header: t("pages.productos.table.code"), key: "codigo", width: 15 },
+        { header: t("pages.productos.table.description"), key: "descripcion", width: 35 },
+        { header: t("pages.productos.table.stock"), key: "stock", width: 15 },
+        ...(esAdmin ? [
+          { header: t("pages.productos.table.purchase_price"), key: "pCompra", width: 15 },
+          { header: t("pages.productos.table.margin"), key: "margGanancia", width: 12 },
+        ] : []),
+        { header: t("pages.productos.table.sale_price"), key: "pVenta", width: 15 },
+        ...(esAdmin ? [
+          { header: t("pages.productos.table.utility"), key: "utilidad", width: 15 },
+        ] : []),
+        { header: t("pages.productos.table.supplier"), key: "proveedorNombre", width: 25 }
+      ];
+
+      worksheet.columns = columns.map(col => ({
+        header: col.header,
+        key: col.key,
+        width: col.width
+      }));
+
+      // Styles for header row
+      const headerRow = worksheet.getRow(1);
+      headerRow.height = 28;
+      headerRow.eachCell((cell) => {
+        cell.font = {
+          name: "Segoe UI",
+          family: 2,
+          size: 10,
+          bold: true,
+          color: { argb: "FF94A3B8" } // slate-400
+        };
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FF0F172A" } // slate-950
+        };
+        const key = columns[cell.column - 1]?.key;
+        cell.alignment = {
+          vertical: "middle",
+          horizontal: ["pCompra", "margGanancia", "pVenta", "utilidad"].includes(key)
+            ? "right"
+            : ["stock"].includes(key)
+              ? "center"
+              : "left"
+        };
+        cell.border = {
+          bottom: { style: "medium", color: { argb: "FF334155" } },
+          right: { style: "thin", color: { argb: "FF334155" } }
+        };
+      });
+
+      // Populate data rows
+      filtrados.forEach((p) => {
+        const rowData = {
+          id: p.id,
+          oem: p.oem || "—",
+          codigo: p.codigo,
+          descripcion: p.descripcion,
+          stock: p.stock,
+          pCompra: p.pCompra,
+          margGanancia: p.margGanancia,
+          pVenta: p.pVenta,
+          utilidad: p.utilidad,
+          proveedorNombre: p.proveedorNombre || "—"
+        };
+        
+        const row = worksheet.addRow(rowData);
+        row.height = 22;
+
+        columns.forEach((col, index) => {
+          const cell = row.getCell(index + 1);
+
+          cell.font = {
+            name: "Segoe UI",
+            size: 10,
+            color: { argb: "FF1E293B" } // slate-800
+          };
+          cell.alignment = {
+            vertical: "middle",
+            horizontal: "left"
+          };
+          cell.border = {
+            bottom: { style: "thin", color: { argb: "FFE2E8F0" } },
+            right: { style: "thin", color: { argb: "FFE2E8F0" } }
+          };
+
+          // Apply cell-specific styling mapped from grid classes
+          if (col.key === "id") {
+            cell.font = { name: "Courier New", size: 9.5, color: { argb: "FF64748B" } }; // text-slate-500 font-mono text-xs
+          } else if (col.key === "oem") {
+            cell.font = { name: "Segoe UI", size: 9.5, color: { argb: "FF64748B" } }; // text-slate-500 text-xs
+          } else if (col.key === "codigo") {
+            cell.font = { name: "Courier New", size: 9.5, bold: true, color: { argb: "FFBE123C" } }; // text-rose-700 font-semibold font-mono
+          } else if (col.key === "descripcion") {
+            cell.font = { name: "Segoe UI", size: 10, bold: true, color: { argb: "FF1E293B" } }; // font-medium text-slate-800
+          } else if (col.key === "stock") {
+            cell.alignment = { vertical: "middle", horizontal: "center" };
+            
+            // Badge simulation
+            if (p.stock === 0) {
+              cell.value = t("pages.productos.badges.out_of_stock") || "AGOTADO";
+              cell.font = { name: "Segoe UI", size: 9, bold: true, color: { argb: "FFEF4444" } };
+              cell.fill = {
+                type: "pattern",
+                pattern: "solid",
+                fgColor: { argb: "FFFEE2E2" }
+              };
+            } else if (p.stock <= 5) {
+              cell.value = t("pages.productos.badges.low_stock", { count: p.stock }) || `${p.stock} (BAJO)`;
+              cell.font = { name: "Segoe UI", size: 9, bold: true, color: { argb: "FFD97706" } };
+              cell.fill = {
+                type: "pattern",
+                pattern: "solid",
+                fgColor: { argb: "FFFFFBEB" }
+              };
+            } else {
+              cell.value = p.stock;
+              cell.font = { name: "Segoe UI", size: 9.5, bold: true, color: { argb: "FF059669" } };
+              cell.fill = {
+                type: "pattern",
+                pattern: "solid",
+                fgColor: { argb: "FFF0FDF4" }
+              };
+            }
+          } else if (col.key === "pCompra") {
+            cell.numFmt = '"S/."#,##0.00';
+            cell.alignment = { vertical: "middle", horizontal: "right" };
+            cell.font = { name: "Segoe UI", size: 10, color: { argb: "FF475569" } }; // text-slate-600
+          } else if (col.key === "margGanancia") {
+            cell.numFmt = '0.00"%"';
+            cell.alignment = { vertical: "middle", horizontal: "right" };
+            cell.font = { name: "Segoe UI", size: 10, color: { argb: "FF475569" } }; // text-slate-600
+          } else if (col.key === "pVenta") {
+            cell.numFmt = '"S/."#,##0.00';
+            cell.alignment = { vertical: "middle", horizontal: "right" };
+            cell.font = { name: "Segoe UI", size: 10, bold: true, color: { argb: "FF1E293B" } }; // text-slate-800 font-semibold
+          } else if (col.key === "utilidad") {
+            cell.numFmt = '"S/."#,##0.00';
+            cell.alignment = { vertical: "middle", horizontal: "right" };
+            cell.font = { name: "Segoe UI", size: 10, bold: true, color: { argb: "FF059669" } }; // text-emerald-600 font-semibold
+          } else if (col.key === "proveedorNombre") {
+            cell.font = { name: "Segoe UI", size: 9.5, color: { argb: "FF64748B" } }; // text-slate-500 text-xs
+          }
+        });
+      });
+
+      // Auto-fit column widths to prevent content from cutting off in Excel
+      worksheet.columns.forEach((column) => {
+        let maxLen = 0;
+        column.eachCell({ includeEmpty: true }, (cell) => {
+          const val = cell.value;
+          if (val !== null && val !== undefined) {
+            let len = 0;
+            if (typeof val === "object" && val.text) {
+              len = val.text.toString().length;
+            } else if (val instanceof Date) {
+              len = val.toISOString().slice(0, 10).length;
+            } else if (typeof val === "number") {
+              len = val.toString().length + 6; // Approximate formatted currency length
+            } else {
+              len = val.toString().length;
+            }
+            if (len > maxLen) {
+              maxLen = len;
+            }
+          }
+        });
+        column.width = Math.min(Math.max(maxLen + 4, 12), 50);
+      });
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      });
+      const dateStr = new Date().toISOString().slice(0, 10);
+      saveAs(blob, `productos_${dateStr}.xlsx`);
+
+      Swal.fire({
+        icon: "success",
+        title: t("pages.productos.export_success_title") || "Exportación exitosa",
+        text: t("pages.productos.export_success_text") || "Los productos se han exportado correctamente a Excel.",
+        timer: 2000,
+        showConfirmButton: false
+      });
+    } catch (error) {
+      console.error("Error al exportar a Excel:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Ocurrió un error al intentar exportar los productos a Excel."
+      });
+    }
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
@@ -171,12 +382,20 @@ export default function Productos() {
           <p className="text-sm text-slate-500 mt-1">{t("pages.productos.found", { count: filtrados.length })}</p>
         </div>
         {esAdmin && (
-          <button onClick={() => setModalProducto({})} className="btn-primary">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            {t("pages.productos.new")}
-          </button>
+          <div className="flex gap-2">
+            <button onClick={handleExportExcel} className="btn-success">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              {t("pages.productos.export_excel")}
+            </button>
+            <button onClick={() => setModalProducto({})} className="btn-primary">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              {t("pages.productos.new")}
+            </button>
+          </div>
         )}
       </div>
 

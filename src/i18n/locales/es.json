@@ -77,6 +77,9 @@
       "title": "Gestión de productos",
       "found": "{{count}} productos encontrados",
       "new": "Nuevo Producto",
+      "export_excel": "Exportar a Excel",
+      "export_success_title": "Exportación exitosa",
+      "export_success_text": "Los productos se han exportado correctamente a Excel.",
       "search_placeholder": "Buscar por descripción, código, OEM...",
       "all_suppliers": "Todos los proveedores",
       "all_categories": "Todas las categorías",
@@ -232,6 +235,11 @@
       "title": "Gestión de Ventas",
       "registered": "{{count}} ventas registradas",
       "new": "Registrar Venta",
+      "export_excel": "Exportar a Excel",
+      "export_success_title": "Exportación exitosa",
+      "export_success_text": "Las ventas se han exportado correctamente a Excel.",
+      "export_qty_total": "Cant. Total (u.)",
+      "export_seller": "Vendedor",
       "search_placeholder": "Buscar por producto, cliente o notas...",
       "stats": {
         "total_sales": "Ventas Realizadas",
@@ -303,6 +311,9 @@
       "preview_subtitle": "Revisa el documento antes de descargarlo",
       "download_pdf": "Descargar PDF",
       "close_preview": "Cerrar vista previa",
+      "export_sheet": "Movimientos",
+      "export_success_title": "Exportación exitosa",
+      "export_success_text": "Los registros se han exportado correctamente a Excel.",
       "ventas": {
         "title": "Reporte de Ventas"
       },

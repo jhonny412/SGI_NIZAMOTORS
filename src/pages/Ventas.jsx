@@ -206,13 +206,15 @@ export default function Ventas() {
             {t("pages.ventas.registered", { count: filtrados.length })} órdenes de servicio encontradas
           </p>
         </div>
-        <button
-          onClick={() => setModalAbierto(true)}
-          className="btn-primary flex items-center gap-1.5 shadow-lg shadow-amber-500/15"
-        >
-          <span className="material-symbols-outlined text-lg">add</span>
-          <span>{t("pages.ventas.new")}</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={() => setModalAbierto(true)}
+            className="btn-primary flex items-center gap-1.5 shadow-lg shadow-amber-500/15"
+          >
+            <span className="material-symbols-outlined text-lg">add</span>
+            <span>{t("pages.ventas.new")}</span>
+          </button>
+        </div>
       </div>
 
       {/* KPIs Grid */}
