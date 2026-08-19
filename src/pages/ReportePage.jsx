@@ -1,14 +1,15 @@
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import Swal from "sweetalert2";
 import { useInventory } from "../context/useInventory";
 import { useAuth } from "../context/useAuth";
 import { useUI } from "../context/useUI";
-import { useTranslation } from "react-i18next";
+import { useTranslation, Trans } from "react-i18next";
 import { SkeletonTable } from "../components/Skeleton";
 import { filterByDateRange, getDefaultDateRange } from "../utils/dateFilter";
 import { generateVentasPdf, generateMovimientosPdf, generateKardexPdf } from "../utils/reportPdf";
 import { exportVentasExcel } from "../utils/exportVentasExcel";
 import { exportMovimientosExcel } from "../utils/exportMovimientosExcel";
+import Pagination from "../components/Pagination";
 
 const REPORT_CONFIG = {
   "reporte-ventas": { type: "ventas", titleKey: "pages.reportes.ventas.title" },
@@ -59,6 +60,20 @@ function getDatePresets() {
   };
 }
 
+function getYesterdayAndToday() {
+  const hoy = new Date();
+  const toInput = (d) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  };
+  const hoyStr = toInput(hoy);
+  const ayer = new Date(hoy);
+  ayer.setDate(hoy.getDate() - 1);
+  return { hoy: hoyStr, ayer: toInput(ayer) };
+}
+
 export default function ReportePage() {
   const { ventas, movimientos, productos, cargando, formatFecha } = useInventory();
   const { usuarioActivo } = useAuth();
@@ -70,19 +85,38 @@ export default function ReportePage() {
   const defaults = getDefaultDateRange();
   const presets = useMemo(() => getDatePresets(), []);
 
-  const [fechaDesde, setFechaDesde] = useState(defaults.desde);
-  const [fechaHasta, setFechaHasta] = useState(defaults.hasta);
-  const [presetActivo, setPresetActivo] = useState(null);
+  const defaultDates = useMemo(() => getYesterdayAndToday(), []);
 
+  // Estados temporales del modal de filtros
+  const [fechaDesde, setFechaDesde] = useState(defaultDates.ayer);
+  const [fechaHasta, setFechaHasta] = useState(defaultDates.hoy);
+  const [presetActivo, setPresetActivo] = useState(null);
   const [metodoPago, setMetodoPago] = useState("");
   const [clienteSearch, setClienteSearch] = useState("");
   const [productoFilter, setProductoFilter] = useState("");
   const [movTipoFilter, setMovTipoFilter] = useState("todos");
   const [motivoSearch, setMotivoSearch] = useState("");
 
+  // Estados de filtros aplicados
+  const [appliedFechaDesde, setAppliedFechaDesde] = useState("");
+  const [appliedFechaHasta, setAppliedFechaHasta] = useState("");
+  const [appliedPresetActivo, setAppliedPresetActivo] = useState(null);
+  const [appliedMetodoPago, setAppliedMetodoPago] = useState("");
+  const [appliedClienteSearch, setAppliedClienteSearch] = useState("");
+  const [appliedProductoFilter, setAppliedProductoFilter] = useState("");
+  const [appliedMovTipoFilter, setAppliedMovTipoFilter] = useState("todos");
+  const [appliedMotivoSearch, setAppliedMotivoSearch] = useState("");
+
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [pdfUrl, setPdfUrl] = useState("");
+
+  const [pagina, setPagina] = useState(1);
+  const itemsPorPagina = 9;
+
+  useEffect(() => {
+    setPagina(1);
+  }, [paginaActiva]);
 
   const getProducto = useCallback((id) => productos.find((p) => p.id === id), [productos]);
 
@@ -95,15 +129,42 @@ export default function ReportePage() {
     }
   };
 
+  const openFilterModal = () => {
+    const dates = getYesterdayAndToday();
+    setFechaDesde(appliedFechaDesde || dates.ayer);
+    setFechaHasta(appliedFechaHasta || dates.hoy);
+    setPresetActivo(appliedPresetActivo);
+    setMetodoPago(appliedMetodoPago);
+    setClienteSearch(appliedClienteSearch);
+    setProductoFilter(appliedProductoFilter);
+    setMovTipoFilter(appliedMovTipoFilter);
+    setMotivoSearch(appliedMotivoSearch);
+    setShowFilterModal(true);
+  };
+
+  const applyFilters = () => {
+    setAppliedFechaDesde(fechaDesde);
+    setAppliedFechaHasta(fechaHasta);
+    setAppliedPresetActivo(presetActivo);
+    setAppliedMetodoPago(metodoPago);
+    setAppliedClienteSearch(clienteSearch);
+    setAppliedProductoFilter(productoFilter);
+    setAppliedMovTipoFilter(movTipoFilter);
+    setAppliedMotivoSearch(motivoSearch);
+    setPagina(1);
+    setShowFilterModal(false);
+  };
+
   const clearFilters = () => {
     setPresetActivo(null);
-    setFechaDesde(defaults.desde);
-    setFechaHasta(defaults.hasta);
+    setFechaDesde("");
+    setFechaHasta("");
     setMetodoPago("");
     setClienteSearch("");
     setProductoFilter("");
     setMovTipoFilter("todos");
     setMotivoSearch("");
+    setPagina(1);
   };
 
   const datosFiltrados = useMemo(() => {
@@ -116,56 +177,74 @@ export default function ReportePage() {
       datos = esAdmin
         ? (ventas || [])
         : (ventas || []).filter((v) => {
-            const sellerName = String(v.vendedor || "").trim().toLowerCase();
-            return sellerName !== "" && sellerName === usuarioNombreNorm;
-          });
+          const sellerName = String(v.vendedor || "").trim().toLowerCase();
+          return sellerName !== "" && sellerName === usuarioNombreNorm;
+        });
 
-      if (metodoPago) datos = datos.filter((v) => v.metodoPago === metodoPago);
-      if (clienteSearch)
+      if (appliedMetodoPago) datos = datos.filter((v) => v.metodoPago === appliedMetodoPago);
+      if (appliedClienteSearch)
         datos = datos.filter((v) =>
-          (v.cliente || "").toLowerCase().includes(clienteSearch.toLowerCase())
+          (v.cliente || "").toLowerCase().includes(appliedClienteSearch.toLowerCase())
         );
     } else if (config.type === "kardex") {
       datos = movimientos || [];
-      if (movTipoFilter && movTipoFilter !== "todos") {
-        datos = datos.filter((m) => m.tipo === movTipoFilter);
+      if (appliedMovTipoFilter && appliedMovTipoFilter !== "todos") {
+        datos = datos.filter((m) => m.tipo === appliedMovTipoFilter);
       }
-      if (productoFilter) {
+      if (appliedProductoFilter) {
         datos = datos.filter((m) => {
           const prod = getProducto(m.productoId);
           const desc = (prod?.descripcion || "").toLowerCase();
           const cod = (prod?.codigo || "").toLowerCase();
-          const q = productoFilter.toLowerCase();
+          const q = appliedProductoFilter.toLowerCase();
           return desc.includes(q) || cod.includes(q);
         });
       }
-      if (motivoSearch) {
+      if (appliedMotivoSearch) {
         datos = datos.filter((m) =>
-          (m.motivo || "").toLowerCase().includes(motivoSearch.toLowerCase())
+          (m.motivo || "").toLowerCase().includes(appliedMotivoSearch.toLowerCase())
         );
       }
     } else {
       datos = (movimientos || []).filter((m) => m.tipo === config.movTipo);
-      if (productoFilter) {
+      if (appliedProductoFilter) {
         datos = datos.filter((m) => {
           const prod = getProducto(m.productoId);
           const desc = (prod?.descripcion || "").toLowerCase();
           const cod = (prod?.codigo || "").toLowerCase();
-          const q = productoFilter.toLowerCase();
+          const q = appliedProductoFilter.toLowerCase();
           return desc.includes(q) || cod.includes(q);
         });
       }
-      if (motivoSearch)
+      if (appliedMotivoSearch)
         datos = datos.filter((m) =>
-          (m.motivo || "").toLowerCase().includes(motivoSearch.toLowerCase())
+          (m.motivo || "").toLowerCase().includes(appliedMotivoSearch.toLowerCase())
         );
     }
 
-    if (fechaDesde || fechaHasta) {
-      datos = filterByDateRange(datos, fechaDesde, fechaHasta);
+    if (appliedFechaDesde || appliedFechaHasta) {
+      datos = filterByDateRange(datos, appliedFechaDesde, appliedFechaHasta);
     }
     return datos.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-  }, [config, ventas, movimientos, fechaDesde, fechaHasta, metodoPago, clienteSearch, productoFilter, movTipoFilter, motivoSearch, getProducto]);
+  }, [
+    config,
+    ventas,
+    movimientos,
+    appliedFechaDesde,
+    appliedFechaHasta,
+    appliedMetodoPago,
+    appliedClienteSearch,
+    appliedProductoFilter,
+    appliedMovTipoFilter,
+    appliedMotivoSearch,
+    getProducto,
+    usuarioActivo
+  ]);
+
+  const totalPaginas = Math.ceil(datosFiltrados.length / itemsPorPagina);
+  const itemsPagina = useMemo(() => {
+    return datosFiltrados.slice((pagina - 1) * itemsPorPagina, pagina * itemsPorPagina);
+  }, [datosFiltrados, pagina]);
 
   const resumen = useMemo(() => {
     if (config.type === "ventas") {
@@ -205,8 +284,8 @@ export default function ReportePage() {
     if (config.type === "ventas") {
       pdfDataUri = await generateVentasPdf({
         ventas: datosFiltrados,
-        fechaDesde,
-        fechaHasta,
+        fechaDesde: appliedFechaDesde,
+        fechaHasta: appliedFechaHasta,
         formatFecha,
         usuario: usuarioNombre,
         preview: true,
@@ -215,8 +294,8 @@ export default function ReportePage() {
       pdfDataUri = await generateKardexPdf({
         movimientos: datosFiltrados,
         productos,
-        fechaDesde,
-        fechaHasta,
+        fechaDesde: appliedFechaDesde,
+        fechaHasta: appliedFechaHasta,
         formatFecha,
         usuario: usuarioNombre,
         preview: true,
@@ -225,8 +304,8 @@ export default function ReportePage() {
       pdfDataUri = await generateMovimientosPdf({
         movimientos: datosFiltrados,
         productos,
-        fechaDesde,
-        fechaHasta,
+        fechaDesde: appliedFechaDesde,
+        fechaHasta: appliedFechaHasta,
         formatFecha,
         tipo: config.movTipo,
         title: t(config.titleKey),
@@ -252,13 +331,13 @@ export default function ReportePage() {
   const handleDownloadPdf = async () => {
     setShowPreview(false);
     if (config.type === "ventas") {
-      await generateVentasPdf({ ventas: datosFiltrados, fechaDesde, fechaHasta, formatFecha, usuario: usuarioNombre });
+      await generateVentasPdf({ ventas: datosFiltrados, fechaDesde: appliedFechaDesde, fechaHasta: appliedFechaHasta, formatFecha, usuario: usuarioNombre });
     } else if (config.type === "kardex") {
       await generateKardexPdf({
         movimientos: datosFiltrados,
         productos,
-        fechaDesde,
-        fechaHasta,
+        fechaDesde: appliedFechaDesde,
+        fechaHasta: appliedFechaHasta,
         formatFecha,
         usuario: usuarioNombre,
       });
@@ -266,8 +345,8 @@ export default function ReportePage() {
       await generateMovimientosPdf({
         movimientos: datosFiltrados,
         productos,
-        fechaDesde,
-        fechaHasta,
+        fechaDesde: appliedFechaDesde,
+        fechaHasta: appliedFechaHasta,
         formatFecha,
         tipo: config.movTipo,
         title: t(config.titleKey),
@@ -284,7 +363,7 @@ export default function ReportePage() {
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t("pages.reportes.subtitle")}</p>
         </div>
         <div className="flex gap-3 flex-shrink-0">
-          <button type="button" onClick={() => setShowFilterModal(true)} className="btn-secondary">
+          <button type="button" onClick={openFilterModal} className="btn-secondary">
             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
             </svg>
@@ -310,7 +389,13 @@ export default function ReportePage() {
         <div className="flex items-center gap-2">
           <span className="material-symbols-outlined text-amber-500 text-lg">calendar_today</span>
           <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-            Rango: <span className="font-bold text-slate-800 dark:text-slate-100">{fechaDesde}</span> al <span className="font-bold text-slate-800 dark:text-slate-100">{fechaHasta}</span>
+            Rango: {appliedFechaDesde || appliedFechaHasta ? (
+              <>
+                <span className="font-bold text-slate-800 dark:text-slate-100">{appliedFechaDesde || "—"}</span> al <span className="font-bold text-slate-800 dark:text-slate-100">{appliedFechaHasta || "—"}</span>
+              </>
+            ) : (
+              <span className="font-bold text-slate-800 dark:text-slate-100">Todos los registros</span>
+            )}
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-4">
@@ -395,11 +480,10 @@ export default function ReportePage() {
                       key={key}
                       type="button"
                       onClick={() => handlePreset(key)}
-                      className={`px-2.5 py-1 text-xs font-semibold rounded-lg border transition-all duration-150 cursor-pointer ${
-                        presetActivo === key
-                          ? "bg-amber-500 border-amber-500 text-slate-950 shadow-md shadow-amber-500/15 font-bold"
-                          : "bg-slate-100 dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
-                      }`}
+                      className={`px-2.5 py-1 text-xs font-semibold rounded-lg border transition-all duration-150 cursor-pointer ${presetActivo === key
+                        ? "bg-amber-500 border-amber-500 text-slate-950 shadow-md shadow-amber-500/15 font-bold"
+                        : "bg-slate-100 dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
+                        }`}
                     >
                       {t(preset.label)}
                     </button>
@@ -557,14 +641,11 @@ export default function ReportePage() {
 
               <button
                 type="button"
-                onClick={() => {
-                  setShowFilterModal(false);
-                  handleVistaPrevia();
-                }}
+                onClick={applyFilters}
                 className="px-4 py-2 text-xs font-bold rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-lg shadow-amber-500/20 transition-all flex items-center gap-1.5 cursor-pointer font-bold"
               >
-                <span className="material-symbols-outlined text-base">picture_as_pdf</span>
-                Generar Reporte
+                <span className="material-symbols-outlined text-base">check</span>
+                Aplicar Filtros
               </button>
             </div>
           </div>
@@ -623,7 +704,7 @@ export default function ReportePage() {
                 </td>
               </tr>
             ) : config.type === "ventas" ? (
-              datosFiltrados.map((v) => (
+              itemsPagina.map((v) => (
                 <tr key={v.id}>
                   <td className="text-slate-400">{formatFecha(v.fecha)}</td>
                   <td className="font-mono text-amber-500">{v.boleta || `LEGACY-${v.id}`}</td>
@@ -638,7 +719,7 @@ export default function ReportePage() {
                 </tr>
               ))
             ) : config.type === "kardex" ? (
-              datosFiltrados.map((m) => {
+              itemsPagina.map((m) => {
                 const prod = getProducto(m.productoId);
                 const isEntrada = m.tipo === "entrada";
                 return (
@@ -663,7 +744,7 @@ export default function ReportePage() {
                 );
               })
             ) : (
-              datosFiltrados.map((m) => {
+              itemsPagina.map((m) => {
                 const prod = getProducto(m.productoId);
                 return (
                   <tr key={m.id}>
@@ -683,6 +764,20 @@ export default function ReportePage() {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination */}
+      {totalPaginas > 1 && (
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mt-5 pt-4 border-t border-slate-100 dark:border-slate-800">
+          <p className="text-sm text-slate-500">
+            <Trans
+              i18nKey="pages.reportes.pagination.showing"
+              values={{ count: itemsPagina.length, total: datosFiltrados.length }}
+              components={{ bold: <strong className="text-slate-700 dark:text-slate-200" /> }}
+            />
+          </p>
+          <Pagination pagina={pagina} totalPaginas={totalPaginas} setPagina={setPagina} />
+        </div>
+      )}
 
       {showPreview && (
         <div className="modal-overlay" onClick={() => setShowPreview(false)}>

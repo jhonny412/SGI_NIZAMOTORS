@@ -339,6 +339,9 @@
         "reason": "Motivo",
         "stock_prev": "Stock ant.",
         "stock_new": "Stock nuevo"
+      },
+      "pagination": {
+        "showing": "Mostrando <bold>{{count}}</bold> de <bold>{{total}}</bold> registros"
       }
     }
   },
