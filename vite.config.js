@@ -82,7 +82,15 @@ export default defineConfig(({ command }) => ({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      exclude: ['node_modules/', 'src/test/setup.js', 'scripts/']
+      include: ['src/**/*.{js,jsx}'],
+      exclude: [
+        'node_modules/**',
+        'src/test/**',
+        'src/main.jsx',
+        'src/utils/logoData.js',
+        '**/*.test.{js,jsx}',
+        '**/*.spec.{js,jsx}'
+      ]
     }
   }
 }))

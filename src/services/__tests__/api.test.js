@@ -67,5 +67,24 @@ describe('API Service (fetchSheet & postAction)', () => {
 
       await expect(postAction('Productos', 'create', {})).rejects.toThrow('Código duplicado');
     });
+
+    it('throws error if response is ok but status is error', async () => {
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        text: async () => JSON.stringify({ status: 'error', message: 'Fallo de negocio' })
+      });
+
+      await expect(postAction('Productos', 'create', {})).rejects.toThrow('Fallo de negocio');
+    });
+
+    it('handles non-json response text on failure', async () => {
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 502,
+        text: async () => 'Bad Gateway'
+      });
+
+      await expect(postAction('Productos', 'create', {})).rejects.toThrow('HTTP 502 en Productos/create');
+    });
   });
 });
