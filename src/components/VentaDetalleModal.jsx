@@ -1,115 +1,20 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/useAuth";
 import QRCode from "qrcode";
+import Swal from "sweetalert2";
 import logoLight from "../assets/logo-light.png";
-
-// Helper to convert total amount into Spanish text (monto en letras)
-function numeroALetras(amount) {
-  if (amount === undefined || amount === null || isNaN(amount)) return "";
-  const num = Math.floor(amount);
-  const cents = Math.round((amount - num) * 100);
-  const centsStr = String(cents).padStart(2, "0") + "/100 SOLES.";
-
-  if (num === 0) return `SON: CERO Y ${centsStr}`;
-
-  const Unidades = (n) => {
-    switch (n) {
-      case 1: return "UN";
-      case 2: return "DOS";
-      case 3: return "TRES";
-      case 4: return "CUATRO";
-      case 5: return "CINCO";
-      case 6: return "SEIS";
-      case 7: return "SIETE";
-      case 8: return "OCHO";
-      case 9: return "NUEVE";
-      default: return "";
-    }
-  };
-
-  const Decenas = (n) => {
-    const decena = Math.floor(n / 10);
-    const unidad = n % 10;
-    switch (decena) {
-      case 1:
-        switch (unidad) {
-          case 0: return "DIEZ";
-          case 1: return "ONCE";
-          case 2: return "DOCE";
-          case 3: return "TRECE";
-          case 4: return "CATORCE";
-          case 5: return "QUINCE";
-          default: return "DIECI" + Unidades(unidad);
-        }
-      case 2:
-        if (unidad === 0) return "VEINTE";
-        return "VEINTI" + Unidades(unidad);
-      case 3: return "TREINTA" + (unidad > 0 ? " Y " + Unidades(unidad) : "");
-      case 4: return "CUARENTA" + (unidad > 0 ? " Y " + Unidades(unidad) : "");
-      case 5: return "CINCUENTA" + (unidad > 0 ? " Y " + Unidades(unidad) : "");
-      case 6: return "SESENTA" + (unidad > 0 ? " Y " + Unidades(unidad) : "");
-      case 7: return "SETENTA" + (unidad > 0 ? " Y " + Unidades(unidad) : "");
-      case 8: return "OCHENTA" + (unidad > 0 ? " Y " + Unidades(unidad) : "");
-      case 9: return "NOVENTA" + (unidad > 0 ? " Y " + Unidades(unidad) : "");
-      default: return Unidades(unidad);
-    }
-  };
-
-  const Centenas = (n) => {
-    const centena = Math.floor(n / 100);
-    const decena = n % 100;
-    switch (centena) {
-      case 1:
-        if (decena > 0) return "CIENTO " + Decenas(decena);
-        return "CIEN";
-      case 2: return "DOSCIENTOS " + Decenas(decena);
-      case 3: return "TRESCIENTOS " + Decenas(decena);
-      case 4: return "CUATROCIENTOS " + Decenas(decena);
-      case 5: return "QUINIENTOS " + Decenas(decena);
-      case 6: return "SEISCIENTOS " + Decenas(decena);
-      case 7: return "SETECIENTOS " + Decenas(decena);
-      case 8: return "OCHOCIENTOS " + Decenas(decena);
-      case 9: return "NOVECIENTOS " + Decenas(decena);
-      default: return Decenas(decena);
-    }
-  };
-
-  const Miles = (n) => {
-    const divisor = 1000;
-    const cientos = Math.floor(n / divisor);
-    const resto = n % divisor;
-    let strMiles = "";
-    if (cientos === 1) strMiles = "UN MIL";
-    else if (cientos > 1) strMiles = Centenas(cientos) + " MIL";
-
-    const strCentenas = Centenas(resto);
-    if (strMiles === "") return strCentenas;
-    return (strMiles + " " + strCentenas).trim();
-  };
-
-  const Millones = (n) => {
-    const divisor = 1000000;
-    const cientos = Math.floor(n / divisor);
-    const resto = n % divisor;
-    let strMillones = "";
-    if (cientos === 1) strMillones = "UN MILLON";
-    else if (cientos > 1) strMillones = Centenas(cientos) + " MILLONES";
-
-    const strMiles = Miles(resto);
-    if (strMillones === "") return strMiles;
-    return (strMillones + " " + strMiles).trim();
-  };
-
-  const texto = Millones(num).trim();
-  return `SON: ${texto} Y ${centsStr}`;
-}
+import { numeroALetras, parseClienteInfo } from "../utils/comprobante";
+import { generateBoletaPdf } from "../utils/boletaPdf";
+import { validarNumeroWhatsApp, abrirWhatsApp } from "../utils/whatsapp";
 
 export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFecha, autoImprimir }) {
   const { t } = useTranslation();
   const { usuarioActivo } = useAuth();
   const [qrUrl, setQrUrl] = useState("");
+  const [enviandoWhatsApp, setEnviandoWhatsApp] = useState(false);
+  const [imprimiendo, setImprimiendo] = useState(false);
   const hasPrintedRef = useRef(false);
 
   const vendedorNombre = (venta && venta.vendedor) || usuarioActivo?.nombre || "ADMIN SGI";
@@ -134,62 +39,114 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
     }
   }, [venta, formatFecha, vendedorNombre]);
 
+  // Imprime el comprobante generando el mismo PDF (80mm) que se envía por WhatsApp,
+  // de modo que formato y tamaño de papel sean idénticos en ambos casos.
+  const imprimirBoleta = useCallback(async () => {
+    if (!venta) return;
+    const blob = await generateBoletaPdf(venta, { qrUrl, formatFecha, vendedorNombre });
+    const url = URL.createObjectURL(blob);
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+    iframe.src = url;
+    iframe.onload = () => {
+      try {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+      } catch (err) {
+        console.warn("No se pudo imprimir el PDF automáticamente:", err);
+      }
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+        iframe.remove();
+      }, 5000);
+    };
+    document.body.appendChild(iframe);
+  }, [venta, qrUrl, formatFecha, vendedorNombre]);
+
   // Auto print if triggered and automatically close modal afterwards (Guarded strictly once per opening)
   useEffect(() => {
     if (abierto && autoImprimir && venta && !hasPrintedRef.current) {
       hasPrintedRef.current = true;
-      const timer = setTimeout(() => {
-        window.print();
+      const timer = setTimeout(async () => {
+        try {
+          await imprimirBoleta();
+        } catch (err) {
+          console.error("Error al imprimir el comprobante:", err);
+        }
         if (onCerrar) {
           onCerrar();
         }
       }, 400);
       return () => clearTimeout(timer);
     }
-  }, [abierto, autoImprimir, venta, onCerrar]);
+  }, [abierto, autoImprimir, venta, onCerrar, imprimirBoleta]);
 
   if (!abierto || !venta) return null;
-
-  // Helper to parse client details
-  function parseClienteInfo(clienteStr) {
-    if (!clienteStr) {
-      return { nombre: "CLIENTE VARIOS", docTipo: "OTROS", docNro: "-" };
-    }
-
-    // Try to match "NAME (TYPE: NUMBER)"
-    const regex = /^(.*?)\s*\((DNI|RUC|OTROS):\s*(\d+)\)$/;
-    const match = clienteStr.match(regex);
-    if (match) {
-      return {
-        nombre: match[1].trim(),
-        docTipo: match[2],
-        docNro: match[3]
-      };
-    }
-
-    // Legacy match with just number "NAME (NUMBER)"
-    const regexLegacy = /^(.*?)\s*\((\d+)\)$/;
-    const matchLegacy = clienteStr.match(regexLegacy);
-    if (matchLegacy) {
-      return {
-        nombre: matchLegacy[1].trim(),
-        docTipo: matchLegacy[2].length === 11 ? "RUC" : "DNI",
-        docNro: matchLegacy[2]
-      };
-    }
-
-    return {
-      nombre: clienteStr.trim(),
-      docTipo: "OTROS",
-      docNro: "-"
-    };
-  }
 
   const clientInfo = parseClienteInfo(venta.cliente);
   const total = venta.totalVenta;
 
-  const handleImprimir = () => {
-    window.print();
+  const handleImprimir = async () => {
+    setImprimiendo(true);
+    try {
+      await imprimirBoleta();
+    } catch (err) {
+      console.error("Error al imprimir el comprobante:", err);
+      Swal.fire({
+        icon: "error",
+        title: t("sale.wa_error_title"),
+        text: t("sale.wa_error_text")
+      });
+    } finally {
+      setImprimiendo(false);
+    }
+  };
+
+  const handleEnviarWhatsApp = async () => {
+    const { value: numero } = await Swal.fire({
+      title: t("sale.wa_prompt_title"),
+      text: t("sale.wa_prompt_text"),
+      input: "text",
+      inputPlaceholder: t("sale.wa_number_placeholder"),
+      showCancelButton: true,
+      confirmButtonText: t("sale.wa_send"),
+      cancelButtonText: t("sale.wa_cancel"),
+      confirmButtonColor: "#25D366",
+      inputValidator: (value) => {
+        if (!value || !validarNumeroWhatsApp(value)) {
+          return t("sale.wa_invalid_number");
+        }
+        return null;
+      },
+      preConfirm: (value) => validarNumeroWhatsApp(value)
+    });
+
+    if (!numero) return;
+
+    setEnviandoWhatsApp(true);
+    try {
+      const blob = await generateBoletaPdf(venta, { qrUrl, formatFecha, vendedorNombre });
+      const { saveAs } = await import("file-saver");
+      const codigo = venta.boleta
+        ? venta.boleta.replace("BOLETA ", "")
+        : `B001-${String(venta.id).padStart(6, "0")}`;
+      saveAs(blob, `boleta-${codigo}.pdf`);
+      abrirWhatsApp(numero, t("sale.wa_message", { boleta: codigo }));
+    } catch (err) {
+      console.error("Error al generar el comprobante PDF:", err);
+      Swal.fire({
+        icon: "error",
+        title: t("sale.wa_error_title"),
+        text: t("sale.wa_error_text")
+      });
+    } finally {
+      setEnviandoWhatsApp(false);
+    }
   };
 
   return (
@@ -232,7 +189,7 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
             width: 80mm !important;
             max-width: 80mm !important;
             box-sizing: border-box !important;
-            padding: 7mm 4mm 6mm 5mm !important;
+            padding: 3mm 4mm 4mm 5mm !important;
             margin: 0 !important;
             border: none !important;
             box-shadow: none !important;
@@ -468,10 +425,31 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
           <button
             type="button"
             onClick={handleImprimir}
-            className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-slate-900 border border-[#334155] text-slate-200 hover:bg-slate-800 hover:text-white transition-all cursor-pointer"
+            disabled={imprimiendo}
+            className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-slate-900 border border-[#334155] text-slate-200 hover:bg-slate-800 hover:text-white transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            <span className="material-symbols-outlined text-sm">print</span>
+            {imprimiendo ? (
+              <span className="material-symbols-outlined text-sm animate-spin">progress_activity</span>
+            ) : (
+              <span className="material-symbols-outlined text-sm">print</span>
+            )}
             {t("sale.print")}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleEnviarWhatsApp}
+            disabled={enviandoWhatsApp}
+            className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#1ebe5b] text-slate-950 font-bold transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {enviandoWhatsApp ? (
+              <span className="material-symbols-outlined text-sm animate-spin">progress_activity</span>
+            ) : (
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.52.149-.174.198-.298.297-.497.1-.198.05-.371-.025-.52-.074-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.064 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.71.306 1.263.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+              </svg>
+            )}
+            {t("sale.send_whatsapp")}
           </button>
 
           <button
@@ -489,7 +467,7 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
       {/* ============================================================ */}
       {createPortal(
         <div
-          className="print-only-ticket bg-white text-black p-3 font-mono text-[10px] leading-normal"
+          className="print-only-ticket bg-white text-black p-3 font-mono text-[9px] leading-normal"
           style={{ fontFamily: "'Courier New', Courier, monospace" }}
         >
           {/* Logo */}
@@ -497,7 +475,7 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
             <img
               src={logoLight}
               alt="NIZA MOTORS"
-              style={{ width: "50mm", maxHeight: "18mm", objectFit: "contain", margin: "0 auto" }}
+              style={{ width: "34mm", maxHeight: "12mm", objectFit: "contain", margin: "0 auto" }}
             />
           </div>
 
@@ -505,15 +483,15 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
           <div style={{ textAlign: "center", fontWeight: "bold", fontSize: "12px", letterSpacing: "1px", textTransform: "uppercase" }}>
             NIZA MOTORS PERU S.A.C.
           </div>
-          <div style={{ textAlign: "center", fontSize: "9px", color: "#333" }}>
+          <div style={{ textAlign: "center", fontSize: "8.5px", color: "#333" }}>
             Repuestos y Accesorios de Autos
           </div>
 
           {/* Document Type & Number */}
-          <div style={{ textAlign: "center", fontWeight: "bold", fontSize: "10.5px", marginTop: "6px", textTransform: "uppercase" }}>
+          <div style={{ textAlign: "center", fontWeight: "bold", fontSize: "10px", marginTop: "6px", textTransform: "uppercase" }}>
             {venta.boleta ? "BOLETA DE VENTA ELECTRÓNICA" : "TICKET DE VENTA"}
           </div>
-          <div style={{ textAlign: "center", fontWeight: "bold", fontSize: "11px" }}>
+          <div style={{ textAlign: "center", fontWeight: "bold", fontSize: "10.5px" }}>
             {venta.boleta ? venta.boleta.replace("BOLETA ", "") : `B001-${String(venta.id).padStart(6, "0")}`}
           </div>
 
@@ -521,7 +499,7 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
           <div style={{ borderTop: "1px dashed #000", margin: "6px 0" }} />
 
           {/* Fiscal Address & Document Data */}
-          <div style={{ fontSize: "9.5px", lineHeight: "1.3" }}>
+          <div style={{ fontSize: "9px", lineHeight: "1.3" }}>
             <div style={{ fontWeight: "bold" }}>DOMICILIO FISCAL:</div>
             <div style={{ fontSize: "8.5px", color: "#333", textTransform: "uppercase" }}>
               CAL.LOS TALADROS NRO. 257 URB. NARANJAL INDUSTRIAL LIMA - LIMA - INDEPENDENCIA
@@ -544,7 +522,7 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
           <div style={{ borderTop: "1px dashed #000", margin: "6px 0" }} />
 
           {/* Customer Data */}
-          <div style={{ fontSize: "9.5px", lineHeight: "1.3" }}>
+          <div style={{ fontSize: "9px", lineHeight: "1.3" }}>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
               <span>SEÑORES:</span>
               <span style={{ fontWeight: "bold", textTransform: "uppercase", textAlign: "right", maxWidth: "145px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -563,7 +541,7 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
           <div style={{ borderTop: "1px dashed #000", margin: "6px 0" }} />
 
           {/* Product Items Table */}
-          <div style={{ fontSize: "9.5px" }}>
+          <div style={{ fontSize: "9px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", fontWeight: "bold", borderBottom: "1px dashed #000", paddingBottom: "4px", marginBottom: "4px" }}>
               <span style={{ width: "46%", textAlign: "left" }}>PRODUCTO</span>
               <span style={{ width: "14%", textAlign: "right" }}>CANT</span>
@@ -602,7 +580,7 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
           <div style={{ borderTop: "1px dashed #000", margin: "6px 0" }} />
 
           {/* Seller Info */}
-          <div style={{ fontSize: "9.5px", fontWeight: "bold", textTransform: "uppercase" }}>
+          <div style={{ fontSize: "9px", fontWeight: "bold", textTransform: "uppercase" }}>
             VENDEDOR(A) : {vendedorNombre.toUpperCase()}
           </div>
 
@@ -610,7 +588,7 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
           <div style={{ borderTop: "1px dashed #000", margin: "6px 0" }} />
 
           {/* Footer Notes & QR Code */}
-          <div style={{ textAlign: "center", fontSize: "8.5px", lineHeight: "1.3" }}>
+          <div style={{ textAlign: "center", fontSize: "8px", lineHeight: "1.3" }}>
             <div>Representación impresa de la Boleta de Venta Electrónica.</div>
             <div>Gracias por su preferencia</div>
           </div>
@@ -620,10 +598,10 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
               <img
                 src={qrUrl}
                 alt="QR Code Comprobante"
-                style={{ width: "112px", height: "112px", border: "1px solid #ccc", padding: "4px", background: "#fff" }}
+                style={{ width: "90px", height: "90px", border: "1px solid #ccc", padding: "4px", background: "#fff" }}
               />
             ) : (
-              <div style={{ width: "112px", height: "112px", border: "1px solid #ccc", padding: "4px", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "8px" }}>
+              <div style={{ width: "90px", height: "90px", border: "1px solid #ccc", padding: "4px", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "8px" }}>
                 Cargando QR...
               </div>
             )}

@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, fireEvent, act } from '@testing-library/react';
-import React from 'react';
+import { render, fireEvent, act, screen } from '@testing-library/react';
 import Creditos from '../Creditos';
 import { InventoryContext } from '../../context/InventoryContext';
 import { AuthContext } from '../../context/AuthContext';
+import Swal from 'sweetalert2';
 
 vi.mock('sweetalert2', () => ({
   default: {
@@ -19,8 +19,8 @@ describe('Creditos Page', () => {
   const mockInventoryContext = {
     cargando: false,
     productos: [
-      { id: 1, codigo: 'P01', descripcion: 'Filtro de Aceite', stock: 10, pVenta: 50 },
-      { id: 2, codigo: 'P02', descripcion: 'Pastillas Freno', stock: 5, pVenta: 80 },
+      { id: 1, codigo: 'P01', oem: 'OEM01', descripcion: 'Filtro de Aceite', stock: 10, pVenta: 50 },
+      { id: 2, codigo: 'P02', oem: '', descripcion: 'Pastillas Freno', stock: 5, pVenta: 80 },
     ],
     traslados: [
       {
@@ -43,8 +43,19 @@ describe('Creditos Page', () => {
         fechaResolucion: '2026-03-03',
         items: [{ productoId: 2, cantidad: 1, precioVenta: 80, total: 80 }],
       },
+      {
+        id: 3,
+        tiendaVecina: 'Tienda Sur',
+        fechaPrestamo: '2026-03-03',
+        total: 50,
+        cantidad: 1,
+        estado: 'pagado',
+        fechaResolucion: '2026-03-04',
+        productoId: 999,
+        items: [],
+      },
     ],
-    tiendasVecinas: ['Tienda Central', 'Tienda Norte'],
+    tiendasVecinas: ['Tienda Central', 'Tienda Norte', 'Tienda Sur'],
     resolverTraslado: vi.fn().mockResolvedValue(true),
   };
 
@@ -64,40 +75,79 @@ describe('Creditos Page', () => {
     expect(container.textContent).toContain('Tienda Central');
     expect(container.textContent).toContain('Tienda Norte');
 
-    // Filter tabs
-    const filterTabs = container.querySelectorAll('.flex.bg-slate-100 button, .flex.bg-slate-950 button');
-    filterTabs.forEach((tab) => fireEvent.click(tab));
-
     // Search input
     const searchInput = container.querySelector('input[placeholder*="Buscar"]');
-    if (searchInput) fireEvent.change(searchInput, { target: { value: 'Filtro' } });
-
-    // Open detail modal for first item (button with eye or view)
-    const viewBtn = container.querySelector('button[title*="Ver detalle"]') || container.querySelector('tbody button');
-    if (viewBtn) {
-      await act(async () => {
-        fireEvent.click(viewBtn);
-      });
-
-      // In modal: click "Devuelto" or "Pagó Efectivo"
-      const modalActionBtns = container.querySelectorAll('.modal-overlay button');
-      for (const mBtn of modalActionBtns) {
-        await act(async () => {
-          fireEvent.click(mBtn);
-        });
-      }
+    if (searchInput) {
+      fireEvent.change(searchInput, { target: { value: 'Filtro' } });
+      fireEvent.change(searchInput, { target: { value: '' } });
     }
 
-    // Click direct action buttons (Devuelto, Pagó, Notas) in table
-    const actionBtns = container.querySelectorAll('tbody button');
-    for (const btn of actionBtns) {
+    // Direct resolution buttons in table (Devuelto, Pagó) for pending transfer #1
+    const devueltoBtn = container.querySelector('tbody button.bg-emerald-600');
+    if (devueltoBtn) {
       await act(async () => {
-        fireEvent.click(btn);
+        fireEvent.click(devueltoBtn);
       });
+      expect(Swal.fire).toHaveBeenCalled();
+      expect(mockInventoryContext.resolverTraslado).toHaveBeenCalledWith(1, 'devuelto');
     }
 
-    // New transfer button
-    const newBtn = container.querySelector('.page-header .btn-primary');
+    const pagoBtn = container.querySelector('tbody button.bg-blue-600');
+    if (pagoBtn) {
+      await act(async () => {
+        fireEvent.click(pagoBtn);
+      });
+      expect(mockInventoryContext.resolverTraslado).toHaveBeenCalledWith(1, 'pagado');
+    }
+
+    // Open detail modal for pending transfer (first row)
+    const verButtons = container.querySelectorAll('tbody button[title*="detalle"]');
+    if (verButtons.length > 0) {
+      await act(async () => {
+        fireEvent.click(verButtons[0]);
+      });
+
+      expect(container.querySelector('.modal-overlay')).toBeInTheDocument();
+      expect(screen.getByText(/detalle de préstamo/i)).toBeInTheDocument();
+
+      // Click "Pagó Efectivo" inside detail modal
+      const pagoEfectivoModalBtn = screen.getByText(/pagó efectivo/i);
+      await act(async () => {
+        fireEvent.click(pagoEfectivoModalBtn);
+      });
+      expect(mockInventoryContext.resolverTraslado).toHaveBeenCalled();
+    }
+
+    // Open detail modal for resolved transfer (second row)
+    if (verButtons.length > 1) {
+      await act(async () => {
+        fireEvent.click(verButtons[1]);
+      });
+      const cerrarBtn = screen.getByText(/cerrar/i);
+      fireEvent.click(cerrarBtn);
+    }
+
+    // Test filter pills at the end
+    const filterContainer = container.querySelector('.rounded-lg.overflow-x-auto');
+    if (filterContainer) {
+      const pills = filterContainer.querySelectorAll('button');
+      pills.forEach((p) => fireEvent.click(p));
+    }
+
+    // Open new transfer modal
+    const newBtn = container.querySelector('.page-header button');
     if (newBtn) fireEvent.click(newBtn);
+  });
+
+  it('renders empty state when no transfers match', () => {
+    const { container } = render(
+      <AuthContext.Provider value={mockAuthContext}>
+        <InventoryContext.Provider value={{ ...mockInventoryContext, traslados: [] }}>
+          <Creditos />
+        </InventoryContext.Provider>
+      </AuthContext.Provider>
+    );
+
+    expect(container.textContent).toContain('No se encontraron préstamos o traslados');
   });
 });

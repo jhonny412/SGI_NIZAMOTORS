@@ -373,7 +373,7 @@ function ModalDetallePréstamo({ traslado, productos, onCerrar, onResolver, t })
                 <tr>
                   <td className="text-[10px] font-bold text-slate-400">{itemsDetalle.length} repuesto(s) — {cantTotal} unid.</td>
                   <td colSpan={2} className="text-right text-[10px] font-black text-slate-400 uppercase tracking-wider">Total</td>
-                  <td className="text-right text-base font-extrabold text-rose-600 dark:text-rose-400 font-mono">S/. {traslado.total.toFixed(2)}</td>
+                  <td className="text-right text-base font-extrabold text-rose-600 dark:text-rose-400 font-mono">S/. {(Number(traslado.total) || 0).toFixed(2)}</td>
                 </tr>
               </tfoot>
             </table>

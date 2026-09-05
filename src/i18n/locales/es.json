@@ -462,7 +462,17 @@
     "client_info": "Información del Cliente",
     "sale_info": "Información de la Venta",
     "legacy_sale": "Venta Legacy",
-    "items_list": "Ítems Detallados"
+    "items_list": "Ítems Detallados",
+    "send_whatsapp": "Enviar por WhatsApp",
+    "wa_prompt_title": "Enviar por WhatsApp",
+    "wa_prompt_text": "Ingresa el número de teléfono del destinatario.",
+    "wa_number_placeholder": "+51 999 999 999",
+    "wa_invalid_number": "Número inválido. Ingresa un número válido (ej. +51 999 999 999).",
+    "wa_send": "Enviar",
+    "wa_cancel": "Cancelar",
+    "wa_message": "Hola, le comparto su comprobante {{boleta}}.",
+    "wa_error_title": "Error",
+    "wa_error_text": "No se pudo generar el comprobante PDF."
   },
   "alerts": {
     "product_added": "Producto agregado",

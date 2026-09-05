@@ -460,7 +460,17 @@
     "client_info": "Customer Information",
     "sale_info": "Sale Information",
     "legacy_sale": "Legacy Sale",
-    "items_list": "Detailed Items"
+    "items_list": "Detailed Items",
+    "send_whatsapp": "Send via WhatsApp",
+    "wa_prompt_title": "Send via WhatsApp",
+    "wa_prompt_text": "Enter the recipient's phone number.",
+    "wa_number_placeholder": "+51 999 999 999",
+    "wa_invalid_number": "Invalid number. Enter a valid number (e.g. +51 999 999 999).",
+    "wa_send": "Send",
+    "wa_cancel": "Cancel",
+    "wa_message": "Hello, here is your receipt {{boleta}}.",
+    "wa_error_title": "Error",
+    "wa_error_text": "Could not generate the PDF receipt."
   },
   "alerts": {
     "product_added": "Product added",
