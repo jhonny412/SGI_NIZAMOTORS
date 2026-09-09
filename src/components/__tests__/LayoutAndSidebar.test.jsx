@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, fireEvent, act } from '@testing-library/react';
-import React from 'react';
+import { render, fireEvent } from '@testing-library/react';
 import Layout from '../Layout';
 import Sidebar from '../Sidebar';
 import { AuthContext } from '../../context/AuthContext';
@@ -68,6 +67,7 @@ describe('Layout and Sidebar Components', () => {
     const { container, rerender } = renderWithProviders(<Sidebar />);
 
     expect(container.textContent).toContain('Niza Motors');
+    expect(container.textContent).toMatch(/(?:Versión|Version) 1\.0/);
 
     // Click all nav buttons and groups
     const navButtons = container.querySelectorAll('nav button');
@@ -90,6 +90,7 @@ describe('Layout and Sidebar Components', () => {
 
     const expandBtn = container.querySelector('button[aria-label*="Expandir"]') || container.querySelector('aside button');
     if (expandBtn) fireEvent.click(expandBtn);
+    expect(container.textContent).toContain('v1.0');
 
     // Test Seller role
     rerender(

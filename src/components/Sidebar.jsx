@@ -5,6 +5,7 @@ import { ROUTES } from "../config/routes";
 import { useTranslation } from "react-i18next";
 import logoDark from "../assets/logo.png";
 import logoLight from "../assets/logo-light.png";
+import { APP_VERSION } from "../config/app";
 
 export default function Sidebar() {
   const { paginaActiva, setPaginaActiva, sidebarAbierto, setSidebarAbierto, tema } = useUI();
@@ -392,21 +393,40 @@ export default function Sidebar() {
             })}
           </nav>
 
-          {/* macOS Footer Status Card */}
-          <div className={`border-t border-slate-200/80 dark:border-[#334155]/60 p-3.5 ${!sidebarAbierto ? "hidden" : ""}`}>
-            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/40 p-2.5 backdrop-blur-md">
-              <div className="flex items-center justify-between">
-                <span className="text-[9.5px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-500">{t("common.status")}</span>
-                <span className="flex h-2 w-2 relative">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          {/* Footer: estado del sistema y versión */}
+          <div className="border-t border-slate-200/80 dark:border-[#334155]/60 p-3.5">
+            {sidebarAbierto ? (
+              <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/40 p-2.5 backdrop-blur-md">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[9.5px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-500">{t("common.status")}</span>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="rounded-md border border-amber-500/25 bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-black tracking-wide text-amber-700 dark:text-amber-400"
+                      title={`${t("common.software_version")} ${APP_VERSION}`}
+                    >
+                      {t("common.version")} {APP_VERSION}
+                    </span>
+                    <span className="flex h-2 w-2 relative">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                  </div>
+                </div>
+                <p className="mt-1 text-xs font-semibold text-slate-700 dark:text-slate-300">{t("common.synced")}</p>
+                <div className="mt-2 pt-2 border-t border-slate-200/60 dark:border-slate-800/80 text-[10px] text-center font-bold tracking-wider text-slate-500 dark:text-slate-400 uppercase flex items-center justify-center gap-1">
+                  <a href="https://www.solbinx.com" target="_blank" rel="noopener noreferrer" className="text-amber-600 dark:text-amber-400 font-extrabold tracking-widest hover:underline">www.solbinx.com</a>
+                </div>
+              </div>
+            ) : (
+              <div className="hidden lg:flex justify-center">
+                <span
+                  className="rounded-md border border-amber-500/25 bg-amber-500/10 px-1.5 py-1 text-[9px] font-black tracking-wide text-amber-700 dark:text-amber-400"
+                  title={`${t("common.software_version")} ${APP_VERSION}`}
+                >
+                  v{APP_VERSION}
                 </span>
               </div>
-              <p className="mt-1 text-xs font-semibold text-slate-700 dark:text-slate-300">{t("common.synced")}</p>
-              <div className="mt-2 pt-2 border-t border-slate-200/60 dark:border-slate-800/80 text-[10px] text-center font-bold tracking-wider text-slate-500 dark:text-slate-400 uppercase flex items-center justify-center gap-1">
-                <span>Desarrollado por:</span> <a href="https://www.solbinx.com" target="_blank" rel="noopener noreferrer" className="text-amber-600 dark:text-amber-400 font-extrabold tracking-widest hover:underline">www.solbinx.com</a>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </aside>

@@ -5,6 +5,8 @@
     "active_operation": "Operación activa",
     "synced": "Inventario sincronizado",
     "status": "Estado",
+    "version": "Versión",
+    "software_version": "Versión del software",
     "close": "Cerrar",
     "back": "Volver",
     "close_menu": "Cerrar menú",
