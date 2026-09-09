@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
-import React from 'react';
 import VentaFormModal from '../VentaFormModal';
 import VentaDetalleModal from '../VentaDetalleModal';
 import { InventoryContext } from '../../context/InventoryContext';
@@ -66,6 +65,7 @@ describe('Venta Modals (VentaFormModal & VentaDetalleModal)', () => {
     vi.clearAllMocks();
     Object.defineProperty(URL, 'createObjectURL', { value: vi.fn(() => 'blob:mock'), configurable: true });
     Object.defineProperty(URL, 'revokeObjectURL', { value: vi.fn(), configurable: true });
+    Object.defineProperty(window, 'showSaveFilePicker', { value: undefined, configurable: true });
   });
 
   describe('VentaFormModal', () => {
@@ -258,6 +258,49 @@ describe('Venta Modals (VentaFormModal & VentaDetalleModal)', () => {
         expect(saveAs).toHaveBeenCalled();
         expect(abrirWhatsApp).toHaveBeenCalled();
       });
+      expect(Swal.fire).toHaveBeenCalledTimes(3);
+      expect(Swal.fire.mock.calls[1][0].confirmButtonText).toMatch(/descargas/i);
+      expect(Swal.fire.mock.calls[2][0].html).toContain('boleta-B001-000001.pdf');
+    });
+
+    it('lets the user choose where to save the receipt before opening WhatsApp', async () => {
+      const write = vi.fn();
+      const close = vi.fn();
+      const createWritable = vi.fn().mockResolvedValue({ write, close });
+      const showSaveFilePicker = vi.fn().mockResolvedValue({
+        name: 'boleta-B001-000001.pdf',
+        createWritable,
+      });
+      Object.defineProperty(window, 'showSaveFilePicker', { value: showSaveFilePicker, configurable: true });
+
+      Swal.fire
+        .mockResolvedValueOnce({ isConfirmed: true, value: '51999888777' })
+        .mockImplementationOnce(async (options) => ({
+          isConfirmed: true,
+          value: await options.preConfirm(),
+        }))
+        .mockResolvedValueOnce({ isConfirmed: true });
+
+      renderWithContext(
+        <VentaDetalleModal
+          abierto={true}
+          venta={venta}
+          formatFecha={(f) => f || '2026-03-01'}
+          onCerrar={vi.fn()}
+        />
+      );
+
+      await act(async () => {
+        fireEvent.click(screen.getByText(/whatsapp/i));
+      });
+
+      await waitFor(() => expect(abrirWhatsApp).toHaveBeenCalled());
+      expect(showSaveFilePicker).toHaveBeenCalledWith(expect.objectContaining({
+        suggestedName: 'boleta-B001-000001.pdf',
+      }));
+      expect(write).toHaveBeenCalledWith(expect.any(Blob));
+      expect(close).toHaveBeenCalled();
+      expect(saveAs).not.toHaveBeenCalled();
     });
 
     it('handles WhatsApp cancel when user does not input a number', async () => {

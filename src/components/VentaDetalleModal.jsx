@@ -144,7 +144,7 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
   };
 
   const handleEnviarWhatsApp = async () => {
-    const { value: numero } = await Swal.fire({
+    const { isConfirmed: numeroConfirmado, value: numero } = await Swal.fire({
       title: t("sale.wa_prompt_title"),
       text: t("sale.wa_prompt_text"),
       input: "text",
@@ -162,17 +162,85 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
       preConfirm: (value) => validarNumeroWhatsApp(value)
     });
 
-    if (!numero) return;
+    if (!numeroConfirmado || !numero) return;
 
     setEnviandoWhatsApp(true);
     try {
       const blob = await generateBoletaPdf(venta, { qrUrl, formatFecha, vendedorNombre });
-      const { saveAs } = await import("file-saver");
       const codigo = venta.boleta
         ? venta.boleta.replace("BOLETA ", "")
         : `B001-${String(venta.id).padStart(6, "0")}`;
-      saveAs(blob, `boleta-${codigo}.pdf`);
-      abrirWhatsApp(numero, t("sale.wa_message", { boleta: codigo }));
+      const nombreArchivo = `boleta-${codigo}.pdf`;
+      let nombreGuardado = nombreArchivo;
+      let ubicacionGuardado = t("sale.wa_selected_location");
+
+      if (typeof window.showSaveFilePicker === "function") {
+        const { isConfirmed: guardado, value: archivoGuardado } = await Swal.fire({
+          icon: "info",
+          title: t("sale.wa_save_title"),
+          text: t("sale.wa_save_picker_text"),
+          showCancelButton: true,
+          confirmButtonText: t("sale.wa_choose_location"),
+          cancelButtonText: t("sale.wa_cancel"),
+          confirmButtonColor: "#25D366",
+          allowOutsideClick: false,
+          preConfirm: async () => {
+            try {
+              const fileHandle = await window.showSaveFilePicker({
+                suggestedName: nombreArchivo,
+                types: [{
+                  description: "Documento PDF",
+                  accept: { "application/pdf": [".pdf"] }
+                }]
+              });
+              const writable = await fileHandle.createWritable();
+              await writable.write(blob);
+              await writable.close();
+              return fileHandle.name || nombreArchivo;
+            } catch (error) {
+              if (error?.name === "AbortError") return false;
+              console.error("Error al guardar el comprobante PDF:", error);
+              Swal.showValidationMessage(t("sale.wa_save_error"));
+              return false;
+            }
+          }
+        });
+
+        if (!guardado || !archivoGuardado) return;
+        nombreGuardado = archivoGuardado;
+      } else {
+        const { isConfirmed: descargar } = await Swal.fire({
+          icon: "info",
+          title: t("sale.wa_save_title"),
+          html: t("sale.wa_download_text", { archivo: nombreArchivo }),
+          showCancelButton: true,
+          confirmButtonText: t("sale.wa_download"),
+          cancelButtonText: t("sale.wa_cancel"),
+          confirmButtonColor: "#25D366"
+        });
+
+        if (!descargar) return;
+        const { saveAs } = await import("file-saver");
+        saveAs(blob, nombreArchivo);
+        ubicacionGuardado = t("sale.wa_downloads_location");
+      }
+
+      const { isConfirmed: abrirChat } = await Swal.fire({
+        icon: "success",
+        title: t("sale.wa_saved_title"),
+        html: t("sale.wa_saved_text", {
+          archivo: nombreGuardado,
+          ubicacion: ubicacionGuardado
+        }),
+        showCancelButton: true,
+        confirmButtonText: t("sale.wa_open_whatsapp"),
+        cancelButtonText: t("sale.wa_close"),
+        confirmButtonColor: "#25D366"
+      });
+
+      if (abrirChat) {
+        abrirWhatsApp(numero, t("sale.wa_message", { boleta: codigo }));
+      }
     } catch (err) {
       console.error("Error al generar el comprobante PDF:", err);
       Swal.fire({
