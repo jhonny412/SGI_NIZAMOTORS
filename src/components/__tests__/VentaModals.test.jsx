@@ -64,7 +64,6 @@ describe('Venta Modals (VentaFormModal & VentaDetalleModal)', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     vi.clearAllMocks();
-    vi.spyOn(window, 'open').mockReturnValue(null);
     Object.defineProperty(URL, 'createObjectURL', { value: vi.fn(() => 'blob:mock'), configurable: true });
     Object.defineProperty(URL, 'revokeObjectURL', { value: vi.fn(), configurable: true });
   });
@@ -198,24 +197,11 @@ describe('Venta Modals (VentaFormModal & VentaDetalleModal)', () => {
       expect(container.textContent).toContain('Empresa SAC');
     });
 
-    it('opens the production-safe preview and invokes the native print dialog', async () => {
+    it('prepares an invisible frame synchronously and only shows the native print dialog', async () => {
       let resolvePdf;
-      let onPreviewLoad;
       generateBoletaPdf.mockReturnValueOnce(new Promise((resolve) => {
         resolvePdf = resolve;
       }));
-      const previewWindow = {
-        closed: false,
-        document: { title: '', body: { textContent: '', style: {} } },
-        location: { replace: vi.fn() },
-        focus: vi.fn(),
-        print: vi.fn(),
-        addEventListener: vi.fn((event, handler) => {
-          if (event === 'load') onPreviewLoad = handler;
-        }),
-        close: vi.fn(),
-      };
-      window.open.mockReturnValueOnce(previewWindow);
 
       const { unmount } = renderWithContext(
         <VentaDetalleModal
@@ -227,15 +213,17 @@ describe('Venta Modals (VentaFormModal & VentaDetalleModal)', () => {
       );
 
       fireEvent.click(screen.getByText(/imprimir/i));
-      expect(window.open).toHaveBeenCalledWith('', '_blank');
-      expect(previewWindow.location.replace).not.toHaveBeenCalled();
+      const printFrame = document.body.querySelector('iframe[title="Vista previa de impresión del comprobante"]');
+      expect(printFrame).toBeInTheDocument();
+      expect(printFrame).toHaveStyle({ opacity: '0', width: '1px', height: '1px' });
+      expect(printFrame).not.toHaveAttribute('src');
 
       resolvePdf(new Blob(['pdf'], { type: 'application/pdf' }));
-      await waitFor(() => expect(previewWindow.location.replace).toHaveBeenCalledWith('blob:mock'));
-      expect(previewWindow.focus).toHaveBeenCalledOnce();
-      expect(previewWindow.addEventListener).toHaveBeenCalledWith('load', expect.any(Function), { once: true });
-      onPreviewLoad();
-      expect(previewWindow.print).toHaveBeenCalledOnce();
+      await waitFor(() => expect(printFrame).toHaveAttribute('src', 'blob:mock'));
+      Object.defineProperty(printFrame.contentWindow, 'focus', { value: vi.fn(), configurable: true });
+      Object.defineProperty(printFrame.contentWindow, 'print', { value: vi.fn(), configurable: true });
+      fireEvent.load(printFrame);
+      expect(printFrame.contentWindow.print).toHaveBeenCalledOnce();
       expect(URL.revokeObjectURL).not.toHaveBeenCalled();
 
       unmount();

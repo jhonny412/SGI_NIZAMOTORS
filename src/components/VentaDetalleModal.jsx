@@ -7,7 +7,7 @@ import Swal from "sweetalert2";
 import logoLight from "../assets/logo-light.png";
 import { numeroALetras, parseClienteInfo } from "../utils/comprobante";
 import { generateBoletaPdf } from "../utils/boletaPdf";
-import { openPrintPreviewWindow } from "../utils/printPreview";
+import { createPrintFrame } from "../utils/printFrame";
 import { validarNumeroWhatsApp, abrirWhatsApp } from "../utils/whatsapp";
 
 export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFecha, autoImprimir }) {
@@ -31,11 +31,9 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
   // Libera cualquier recurso de impresión pendiente solo cuando el componente
   // deja de existir. Durante la vista previa el iframe debe permanecer activo.
   useEffect(() => () => {
-    for (const { iframe, url, closeWatcher, printFallback } of printResourcesRef.current) {
-      if (closeWatcher) window.clearInterval(closeWatcher);
-      if (printFallback) window.clearTimeout(printFallback);
+    for (const { iframe, url } of printResourcesRef.current) {
       URL.revokeObjectURL(url);
-      iframe?.remove();
+      iframe.remove();
     }
     printResourcesRef.current.clear();
   }, []);
@@ -55,69 +53,11 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
 
   // Imprime el comprobante generando el mismo PDF (80mm) que se envía por WhatsApp,
   // de modo que formato y tamaño de papel sean idénticos en ambos casos.
-  const imprimirBoleta = useCallback(async (previewWindow = null) => {
+  const imprimirBoleta = useCallback(async (preparedFrame = null) => {
     if (!venta) return;
     const blob = await generateBoletaPdf(venta, { qrUrl, formatFecha, vendedorNombre });
     const url = URL.createObjectURL(blob);
-
-    // En producción la generación puede requerir descargar módulos antes de
-    // obtener el PDF. La ventana se abre desde el clic original para evitar
-    // que el navegador bloquee la vista previa por perder la activación.
-    if (previewWindow && !previewWindow.closed) {
-      const printResource = {
-        previewWindow,
-        url,
-        closeWatcher: null,
-        printFallback: null,
-        printRequested: false,
-      };
-      const cleanup = () => {
-        if (!printResourcesRef.current.delete(printResource)) return;
-        if (printResource.closeWatcher) window.clearInterval(printResource.closeWatcher);
-        if (printResource.printFallback) window.clearTimeout(printResource.printFallback);
-        URL.revokeObjectURL(url);
-      };
-      const showPrintDialog = () => {
-        if (printResource.printRequested || previewWindow.closed) return;
-        printResource.printRequested = true;
-        if (printResource.printFallback) window.clearTimeout(printResource.printFallback);
-        try {
-          previewWindow.focus();
-          previewWindow.print();
-        } catch (err) {
-          console.warn("No se pudo mostrar el diálogo de impresión:", err);
-        }
-      };
-
-      printResourcesRef.current.add(printResource);
-      printResource.closeWatcher = window.setInterval(() => {
-        if (previewWindow.closed) cleanup();
-      }, 1000);
-
-      try {
-        previewWindow.addEventListener("load", showPrintDialog, { once: true });
-        previewWindow.location.replace(url);
-        previewWindow.focus();
-        // Algunos visores PDF reemplazan el documento y no propagan su evento
-        // load al WindowProxy. Este respaldo abre el mismo diálogo nativo.
-        printResource.printFallback = window.setTimeout(showPrintDialog, 1200);
-        return;
-      } catch (err) {
-        console.warn("No se pudo abrir la vista previa en una pestaña:", err);
-        printResourcesRef.current.delete(printResource);
-        if (printResource.closeWatcher) window.clearInterval(printResource.closeWatcher);
-        if (printResource.printFallback) window.clearTimeout(printResource.printFallback);
-      }
-    }
-
-    const iframe = document.createElement("iframe");
-    iframe.style.position = "fixed";
-    iframe.style.right = "0";
-    iframe.style.bottom = "0";
-    iframe.style.width = "0";
-    iframe.style.height = "0";
-    iframe.style.border = "0";
-    iframe.src = url;
+    const iframe = preparedFrame || createPrintFrame();
     const printResource = { iframe, url };
     printResourcesRef.current.add(printResource);
 
@@ -143,7 +83,7 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
       }
     };
     iframe.onerror = cleanup;
-    document.body.appendChild(iframe);
+    iframe.src = url;
   }, [venta, qrUrl, formatFecha, vendedorNombre]);
 
   // Auto print if triggered. El detalle permanece abierto hasta que el usuario
@@ -153,7 +93,7 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
       hasPrintedRef.current = true;
       const timer = setTimeout(async () => {
         try {
-          await imprimirBoleta(autoImprimir?.previewWindow || null);
+          await imprimirBoleta(autoImprimir?.preparedFrame || null);
         } catch (err) {
           console.error("Error al imprimir el comprobante:", err);
         }
@@ -168,12 +108,14 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
   const total = venta.totalVenta;
 
   const handleImprimir = async () => {
-    const previewWindow = openPrintPreviewWindow();
+    // El iframe se crea durante el clic para que producción conserve la
+    // activación del usuario, pero permanece invisible para evitar pantallas intermedias.
+    const preparedFrame = createPrintFrame();
     setImprimiendo(true);
     try {
-      await imprimirBoleta(previewWindow);
+      await imprimirBoleta(preparedFrame);
     } catch (err) {
-      if (previewWindow && !previewWindow.closed) previewWindow.close();
+      preparedFrame.remove();
       console.error("Error al imprimir el comprobante:", err);
       Swal.fire({
         icon: "error",
