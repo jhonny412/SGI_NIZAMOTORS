@@ -9,6 +9,7 @@ import ImprimirConfirmModal from "../components/ImprimirConfirmModal";
 import SortableTh from "../components/SortableTh";
 import Pagination from "../components/Pagination";
 import { matchSearch } from "../utils/search";
+import { openPrintPreviewWindow } from "../utils/printPreview";
 
 export default function Ventas() {
   const { ventas, productos, cargando, formatFecha, eliminarVenta } = useInventory();
@@ -103,7 +104,7 @@ export default function Ventas() {
     setConfirmImprimirAbierto(false);
     setConfirmBoletaCode(null);
     // Abre el modal de detalle con autoImprimir activado
-    setAutoImprimirDetalle(true);
+    setAutoImprimirDetalle({ previewWindow: openPrintPreviewWindow() });
     setModalDetalleAbierto(true);
   }, []);
 

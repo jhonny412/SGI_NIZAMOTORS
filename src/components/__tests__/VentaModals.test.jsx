@@ -62,7 +62,9 @@ describe('Venta Modals (VentaFormModal & VentaDetalleModal)', () => {
   };
 
   beforeEach(() => {
+    vi.restoreAllMocks();
     vi.clearAllMocks();
+    vi.spyOn(window, 'open').mockReturnValue(null);
     Object.defineProperty(URL, 'createObjectURL', { value: vi.fn(() => 'blob:mock'), configurable: true });
     Object.defineProperty(URL, 'revokeObjectURL', { value: vi.fn(), configurable: true });
   });
@@ -194,6 +196,42 @@ describe('Venta Modals (VentaFormModal & VentaDetalleModal)', () => {
         </AuthContext.Provider>
       );
       expect(container.textContent).toContain('Empresa SAC');
+    });
+
+    it('opens the production-safe preview synchronously before generating the PDF', async () => {
+      let resolvePdf;
+      generateBoletaPdf.mockReturnValueOnce(new Promise((resolve) => {
+        resolvePdf = resolve;
+      }));
+      const previewWindow = {
+        closed: false,
+        document: { title: '', body: { textContent: '', style: {} } },
+        location: { replace: vi.fn() },
+        focus: vi.fn(),
+        close: vi.fn(),
+      };
+      window.open.mockReturnValueOnce(previewWindow);
+
+      const { unmount } = renderWithContext(
+        <VentaDetalleModal
+          abierto={true}
+          venta={venta}
+          formatFecha={(f) => f || '2026-03-01'}
+          onCerrar={vi.fn()}
+        />
+      );
+
+      fireEvent.click(screen.getByText(/imprimir/i));
+      expect(window.open).toHaveBeenCalledWith('', '_blank');
+      expect(previewWindow.location.replace).not.toHaveBeenCalled();
+
+      resolvePdf(new Blob(['pdf'], { type: 'application/pdf' }));
+      await waitFor(() => expect(previewWindow.location.replace).toHaveBeenCalledWith('blob:mock'));
+      expect(previewWindow.focus).toHaveBeenCalledOnce();
+      expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+
+      unmount();
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock');
     });
 
     it('triggers send WhatsApp flow and handles validation/cancellation', async () => {
