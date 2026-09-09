@@ -7,7 +7,6 @@ import Swal from "sweetalert2";
 import logoLight from "../assets/logo-light.png";
 import { numeroALetras, parseClienteInfo } from "../utils/comprobante";
 import { generateBoletaPdf } from "../utils/boletaPdf";
-import { createPrintFrame } from "../utils/printFrame";
 import { validarNumeroWhatsApp, abrirWhatsApp } from "../utils/whatsapp";
 
 export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFecha, autoImprimir }) {
@@ -17,7 +16,6 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
   const [enviandoWhatsApp, setEnviandoWhatsApp] = useState(false);
   const [imprimiendo, setImprimiendo] = useState(false);
   const hasPrintedRef = useRef(false);
-  const printResourcesRef = useRef(new Set());
 
   const vendedorNombre = (venta && venta.vendedor) || usuarioActivo?.nombre || "ADMIN SGI";
 
@@ -27,16 +25,6 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
       hasPrintedRef.current = false;
     }
   }, [abierto]);
-
-  // Libera cualquier recurso de impresión pendiente solo cuando el componente
-  // deja de existir. Durante la vista previa el iframe debe permanecer activo.
-  useEffect(() => () => {
-    for (const { iframe, url } of printResourcesRef.current) {
-      URL.revokeObjectURL(url);
-      iframe.remove();
-    }
-    printResourcesRef.current.clear();
-  }, []);
 
   // Generate local base64 QR Code image URL so it renders instantly in screen & print
   useEffect(() => {
@@ -51,40 +39,12 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
     }
   }, [venta, formatFecha, vendedorNombre]);
 
-  // Imprime el comprobante generando el mismo PDF (80mm) que se envía por WhatsApp,
-  // de modo que formato y tamaño de papel sean idénticos en ambos casos.
-  const imprimirBoleta = useCallback(async (preparedFrame = null) => {
-    if (!venta) return;
-    const blob = await generateBoletaPdf(venta, { qrUrl, formatFecha, vendedorNombre });
-    const url = URL.createObjectURL(blob);
-    const iframe = preparedFrame || createPrintFrame();
-    const printResource = { iframe, url };
-    printResourcesRef.current.add(printResource);
-
-    const cleanup = () => {
-      if (!printResourcesRef.current.delete(printResource)) return;
-      URL.revokeObjectURL(url);
-      iframe.remove();
-    };
-
-    iframe.onload = () => {
-      try {
-        const printWindow = iframe.contentWindow;
-        if (!printWindow) {
-          cleanup();
-          return;
-        }
-        printWindow.addEventListener("afterprint", cleanup, { once: true });
-        printWindow.focus();
-        printWindow.print();
-      } catch (err) {
-        console.warn("No se pudo imprimir el PDF automáticamente:", err);
-        cleanup();
-      }
-    };
-    iframe.onerror = cleanup;
-    iframe.src = url;
-  }, [venta, qrUrl, formatFecha, vendedorNombre]);
+  // La plantilla print-only ya está renderizada en el documento. Imprimir la
+  // ventana actual abre directamente el diálogo nativo, sin pestañas ni iframes.
+  const imprimirBoleta = useCallback(() => {
+    window.focus();
+    window.print();
+  }, []);
 
   // Auto print if triggered. El detalle permanece abierto hasta que el usuario
   // lo cierre explícitamente (guardado estrictamente una vez por apertura).
@@ -93,7 +53,7 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
       hasPrintedRef.current = true;
       const timer = setTimeout(async () => {
         try {
-          await imprimirBoleta(autoImprimir?.preparedFrame || null);
+          imprimirBoleta();
         } catch (err) {
           console.error("Error al imprimir el comprobante:", err);
         }
@@ -108,14 +68,10 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
   const total = venta.totalVenta;
 
   const handleImprimir = async () => {
-    // El iframe se crea durante el clic para que producción conserve la
-    // activación del usuario, pero permanece invisible para evitar pantallas intermedias.
-    const preparedFrame = createPrintFrame();
     setImprimiendo(true);
     try {
-      await imprimirBoleta(preparedFrame);
+      imprimirBoleta();
     } catch (err) {
-      preparedFrame.remove();
       console.error("Error al imprimir el comprobante:", err);
       Swal.fire({
         icon: "error",

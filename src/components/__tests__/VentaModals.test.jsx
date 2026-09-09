@@ -64,6 +64,8 @@ describe('Venta Modals (VentaFormModal & VentaDetalleModal)', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     vi.clearAllMocks();
+    vi.spyOn(window, 'focus').mockImplementation(() => {});
+    vi.spyOn(window, 'print').mockImplementation(() => {});
     Object.defineProperty(URL, 'createObjectURL', { value: vi.fn(() => 'blob:mock'), configurable: true });
     Object.defineProperty(URL, 'revokeObjectURL', { value: vi.fn(), configurable: true });
   });
@@ -165,20 +167,9 @@ describe('Venta Modals (VentaFormModal & VentaDetalleModal)', () => {
 
       const printBtn = screen.getByText(/imprimir/i);
       fireEvent.click(printBtn);
-      await waitFor(() => expect(generateBoletaPdf).toHaveBeenCalled());
-
-      const printFrame = document.body.querySelector('iframe[src="blob:mock"]');
-      expect(printFrame).toBeInTheDocument();
-      expect(URL.revokeObjectURL).not.toHaveBeenCalled();
-
-      Object.defineProperty(printFrame.contentWindow, 'focus', { value: vi.fn(), configurable: true });
-      Object.defineProperty(printFrame.contentWindow, 'print', { value: vi.fn(), configurable: true });
-      fireEvent.load(printFrame);
-      expect(printFrame.contentWindow.print).toHaveBeenCalledOnce();
-      printFrame.contentWindow.dispatchEvent(new Event('afterprint'));
-
-      expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock');
-      expect(printFrame).not.toBeInTheDocument();
+      expect(window.focus).toHaveBeenCalledOnce();
+      expect(window.print).toHaveBeenCalledOnce();
+      expect(generateBoletaPdf).not.toHaveBeenCalled();
       expect(onCerrar).not.toHaveBeenCalled();
 
       // Legacy client matching
@@ -197,13 +188,8 @@ describe('Venta Modals (VentaFormModal & VentaDetalleModal)', () => {
       expect(container.textContent).toContain('Empresa SAC');
     });
 
-    it('prepares an invisible frame synchronously and only shows the native print dialog', async () => {
-      let resolvePdf;
-      generateBoletaPdf.mockReturnValueOnce(new Promise((resolve) => {
-        resolvePdf = resolve;
-      }));
-
-      const { unmount } = renderWithContext(
+    it('shows the native print dialog without an intermediate view', () => {
+      renderWithContext(
         <VentaDetalleModal
           abierto={true}
           venta={venta}
@@ -213,21 +199,8 @@ describe('Venta Modals (VentaFormModal & VentaDetalleModal)', () => {
       );
 
       fireEvent.click(screen.getByText(/imprimir/i));
-      const printFrame = document.body.querySelector('iframe[title="Vista previa de impresión del comprobante"]');
-      expect(printFrame).toBeInTheDocument();
-      expect(printFrame).toHaveStyle({ opacity: '0', width: '1px', height: '1px' });
-      expect(printFrame).not.toHaveAttribute('src');
-
-      resolvePdf(new Blob(['pdf'], { type: 'application/pdf' }));
-      await waitFor(() => expect(printFrame).toHaveAttribute('src', 'blob:mock'));
-      Object.defineProperty(printFrame.contentWindow, 'focus', { value: vi.fn(), configurable: true });
-      Object.defineProperty(printFrame.contentWindow, 'print', { value: vi.fn(), configurable: true });
-      fireEvent.load(printFrame);
-      expect(printFrame.contentWindow.print).toHaveBeenCalledOnce();
-      expect(URL.revokeObjectURL).not.toHaveBeenCalled();
-
-      unmount();
-      expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock');
+      expect(window.print).toHaveBeenCalledOnce();
+      expect(document.body.querySelector('iframe')).not.toBeInTheDocument();
     });
 
     it('triggers send WhatsApp flow and handles validation/cancellation', async () => {
@@ -284,7 +257,9 @@ describe('Venta Modals (VentaFormModal & VentaDetalleModal)', () => {
     });
 
     it('handles error in print gracefully', async () => {
-      generateBoletaPdf.mockRejectedValueOnce(new Error('PDF generation failed'));
+      window.print.mockImplementationOnce(() => {
+        throw new Error('Print dialog failed');
+      });
       renderWithContext(
         <VentaDetalleModal
           abierto={true}
