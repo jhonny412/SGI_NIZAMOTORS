@@ -9,13 +9,31 @@ import { numeroALetras, parseClienteInfo } from "../utils/comprobante";
 import { generateBoletaPdf } from "../utils/boletaPdf";
 import { validarNumeroWhatsApp, abrirWhatsApp } from "../utils/whatsapp";
 
+function createHiddenPdfFrame() {
+  const iframe = document.createElement("iframe");
+  iframe.title = "Comprobante preparado para impresión";
+  iframe.style.position = "fixed";
+  iframe.style.left = "-10000px";
+  iframe.style.top = "0";
+  iframe.style.width = "80mm";
+  iframe.style.height = "300mm";
+  iframe.style.opacity = "0";
+  iframe.style.pointerEvents = "none";
+  iframe.style.border = "0";
+  document.body.appendChild(iframe);
+  return iframe;
+}
+
 export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFecha, autoImprimir }) {
   const { t } = useTranslation();
   const { usuarioActivo } = useAuth();
   const [qrUrl, setQrUrl] = useState("");
   const [enviandoWhatsApp, setEnviandoWhatsApp] = useState(false);
   const [imprimiendo, setImprimiendo] = useState(false);
+  const [qrReady, setQrReady] = useState(false);
+  const [printReady, setPrintReady] = useState(false);
   const hasPrintedRef = useRef(false);
+  const printFrameRef = useRef(null);
 
   const vendedorNombre = (venta && venta.vendedor) || usuarioActivo?.nombre || "ADMIN SGI";
 
@@ -28,39 +46,81 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
 
   // Generate local base64 QR Code image URL so it renders instantly in screen & print
   useEffect(() => {
+    let cancelled = false;
+    setQrUrl("");
+    setQrReady(false);
     if (venta) {
       const boletaNum = venta.boleta ? venta.boleta.replace("BOLETA ", "") : `B001-${String(venta.id).padStart(6, "0")}`;
       const qrData = `RUC: 20603671717 | BOLETA: ${boletaNum} | FECHA: ${formatFecha(venta.fecha)} | TOTAL: S/ ${(venta.totalVenta || 0).toFixed(2)} | VENDEDOR: ${vendedorNombre}`;
       QRCode.toDataURL(qrData, { margin: 1, width: 140 }, (err, url) => {
+        if (cancelled) return;
         if (!err && url) {
           setQrUrl(url);
         }
+        setQrReady(true);
       });
     }
+    return () => {
+      cancelled = true;
+    };
   }, [venta, formatFecha, vendedorNombre]);
 
-  // La plantilla print-only ya está renderizada en el documento. Imprimir la
-  // ventana actual abre directamente el diálogo nativo, sin pestañas ni iframes.
+  // Prepara el PDF térmico completo antes del clic. Así la impresión conserva
+  // el formato exacto de 80 mm y el diálogo se abre sin una vista intermedia.
+  useEffect(() => {
+    if (!abierto || !venta || !qrReady) return undefined;
+
+    let cancelled = false;
+    let objectUrl = null;
+    const iframe = createHiddenPdfFrame();
+    setPrintReady(false);
+    printFrameRef.current = null;
+
+    generateBoletaPdf(venta, { qrUrl, formatFecha, vendedorNombre })
+      .then((blob) => {
+        if (cancelled) return;
+        objectUrl = URL.createObjectURL(blob);
+        iframe.onload = () => {
+          if (cancelled) return;
+          printFrameRef.current = iframe;
+          setPrintReady(true);
+        };
+        iframe.src = objectUrl;
+      })
+      .catch((err) => {
+        if (!cancelled) console.error("Error al preparar el comprobante:", err);
+      });
+
+    return () => {
+      cancelled = true;
+      setPrintReady(false);
+      if (printFrameRef.current === iframe) printFrameRef.current = null;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      iframe.remove();
+    };
+  }, [abierto, venta, qrReady, qrUrl, formatFecha, vendedorNombre]);
+
   const imprimirBoleta = useCallback(() => {
-    window.focus();
-    window.print();
-  }, []);
+    const printWindow = printFrameRef.current?.contentWindow;
+    if (!printReady || !printWindow) {
+      throw new Error("El comprobante todavía no está listo para imprimir.");
+    }
+    printWindow.focus();
+    printWindow.print();
+  }, [printReady]);
 
   // Auto print if triggered. El detalle permanece abierto hasta que el usuario
   // lo cierre explícitamente (guardado estrictamente una vez por apertura).
   useEffect(() => {
-    if (abierto && autoImprimir && venta && !hasPrintedRef.current) {
+    if (abierto && autoImprimir && venta && printReady && !hasPrintedRef.current) {
       hasPrintedRef.current = true;
-      const timer = setTimeout(async () => {
-        try {
-          imprimirBoleta();
-        } catch (err) {
-          console.error("Error al imprimir el comprobante:", err);
-        }
-      }, 400);
-      return () => clearTimeout(timer);
+      try {
+        imprimirBoleta();
+      } catch (err) {
+        console.error("Error al imprimir el comprobante:", err);
+      }
     }
-  }, [abierto, autoImprimir, venta, imprimirBoleta]);
+  }, [abierto, autoImprimir, venta, printReady, imprimirBoleta]);
 
   if (!abierto || !venta) return null;
 
@@ -401,10 +461,10 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
           <button
             type="button"
             onClick={handleImprimir}
-            disabled={imprimiendo}
+            disabled={imprimiendo || !printReady}
             className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-slate-900 border border-[#334155] text-slate-200 hover:bg-slate-800 hover:text-white transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {imprimiendo ? (
+            {imprimiendo || !printReady ? (
               <span className="material-symbols-outlined text-sm animate-spin">progress_activity</span>
             ) : (
               <span className="material-symbols-outlined text-sm">print</span>
