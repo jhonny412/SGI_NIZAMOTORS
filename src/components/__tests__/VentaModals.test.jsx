@@ -144,6 +144,20 @@ describe('Venta Modals (VentaFormModal & VentaDetalleModal)', () => {
       ],
     };
 
+    it('prepares the receipt while the detail modal is still closed', async () => {
+      renderWithContext(
+        <VentaDetalleModal
+          abierto={false}
+          venta={venta}
+          formatFecha={(f) => f || '2026-03-01'}
+          onCerrar={vi.fn()}
+        />
+      );
+
+      await waitFor(() => expect(generateBoletaPdf).toHaveBeenCalled());
+      expect(document.body.querySelector('iframe[title="Comprobante preparado para impresión"]')).toBeInTheDocument();
+    });
+
     it('renders details of a sale, parses client info, and triggers print', async () => {
       const onCerrar = vi.fn();
 
@@ -208,22 +222,24 @@ describe('Venta Modals (VentaFormModal & VentaDetalleModal)', () => {
       );
 
       const printBtn = screen.getByText(/imprimir/i);
-      expect(printBtn).toBeDisabled();
+      expect(printBtn).not.toBeDisabled();
       const printFrame = document.body.querySelector('iframe[title="Comprobante preparado para impresión"]');
       expect(printFrame).toBeInTheDocument();
       expect(printFrame).toHaveStyle({ opacity: '0', left: '-10000px' });
       expect(printFrame.style.width).toBe('80mm');
       expect(printFrame).not.toHaveAttribute('src');
 
+      fireEvent.click(printBtn);
+      expect(printBtn).toBeDisabled();
+
       resolvePdf(new Blob(['pdf'], { type: 'application/pdf' }));
       await waitFor(() => expect(printFrame).toHaveAttribute('src', 'blob:mock'));
       Object.defineProperty(printFrame.contentWindow, 'focus', { value: vi.fn(), configurable: true });
       Object.defineProperty(printFrame.contentWindow, 'print', { value: vi.fn(), configurable: true });
       fireEvent.load(printFrame);
-      await waitFor(() => expect(printBtn).not.toBeDisabled());
-      fireEvent.click(printBtn);
 
-      expect(printFrame.contentWindow.print).toHaveBeenCalledOnce();
+      await waitFor(() => expect(printFrame.contentWindow.print).toHaveBeenCalledOnce());
+      expect(printBtn).not.toBeDisabled();
     });
 
     it('triggers send WhatsApp flow and handles validation/cancellation', async () => {

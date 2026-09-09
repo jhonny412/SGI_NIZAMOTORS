@@ -34,6 +34,7 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
   const [printReady, setPrintReady] = useState(false);
   const hasPrintedRef = useRef(false);
   const printFrameRef = useRef(null);
+  const printWaitersRef = useRef([]);
 
   const vendedorNombre = (venta && venta.vendedor) || usuarioActivo?.nombre || "ADMIN SGI";
 
@@ -68,7 +69,9 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
   // Prepara el PDF térmico completo antes del clic. Así la impresión conserva
   // el formato exacto de 80 mm y el diálogo se abre sin una vista intermedia.
   useEffect(() => {
-    if (!abierto || !venta || !qrReady) return undefined;
+    // También prepara el PDF con el modal cerrado cuando Ventas anticipa la
+    // selección (hover/foco o venta recién registrada).
+    if (!venta || !qrReady) return undefined;
 
     let cancelled = false;
     let objectUrl = null;
@@ -78,47 +81,58 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
 
     generateBoletaPdf(venta, { qrUrl, formatFecha, vendedorNombre })
       .then((blob) => {
-        if (cancelled) return;
+        if (cancelled) return null;
         objectUrl = URL.createObjectURL(blob);
-        iframe.onload = () => {
-          if (cancelled) return;
-          printFrameRef.current = iframe;
-          setPrintReady(true);
-        };
-        iframe.src = objectUrl;
+        return new Promise((resolve, reject) => {
+          iframe.onload = () => {
+            if (cancelled) {
+              resolve(null);
+              return;
+            }
+            printFrameRef.current = iframe;
+            setPrintReady(true);
+            printWaitersRef.current.splice(0).forEach((notify) => notify(iframe));
+            resolve(iframe);
+          };
+          iframe.onerror = () => reject(new Error("No se pudo cargar el comprobante preparado."));
+          iframe.src = objectUrl;
+        });
       })
       .catch((err) => {
         if (!cancelled) console.error("Error al preparar el comprobante:", err);
+        return null;
       });
 
     return () => {
       cancelled = true;
       setPrintReady(false);
       if (printFrameRef.current === iframe) printFrameRef.current = null;
+      printWaitersRef.current.splice(0).forEach((notify) => notify(null));
       if (objectUrl) URL.revokeObjectURL(objectUrl);
       iframe.remove();
     };
-  }, [abierto, venta, qrReady, qrUrl, formatFecha, vendedorNombre]);
+  }, [venta, qrReady, qrUrl, formatFecha, vendedorNombre]);
 
-  const imprimirBoleta = useCallback(() => {
-    const printWindow = printFrameRef.current?.contentWindow;
-    if (!printReady || !printWindow) {
+  const imprimirBoleta = useCallback(async () => {
+    const printFrame = printFrameRef.current || await new Promise((resolve) => {
+      printWaitersRef.current.push(resolve);
+    });
+    const printWindow = printFrame?.contentWindow;
+    if (!printWindow) {
       throw new Error("El comprobante todavía no está listo para imprimir.");
     }
     printWindow.focus();
     printWindow.print();
-  }, [printReady]);
+  }, []);
 
   // Auto print if triggered. El detalle permanece abierto hasta que el usuario
   // lo cierre explícitamente (guardado estrictamente una vez por apertura).
   useEffect(() => {
     if (abierto && autoImprimir && venta && printReady && !hasPrintedRef.current) {
       hasPrintedRef.current = true;
-      try {
-        imprimirBoleta();
-      } catch (err) {
+      void imprimirBoleta().catch((err) => {
         console.error("Error al imprimir el comprobante:", err);
-      }
+      });
     }
   }, [abierto, autoImprimir, venta, printReady, imprimirBoleta]);
 
@@ -130,7 +144,7 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
   const handleImprimir = async () => {
     setImprimiendo(true);
     try {
-      imprimirBoleta();
+      await imprimirBoleta();
     } catch (err) {
       console.error("Error al imprimir el comprobante:", err);
       Swal.fire({
@@ -529,10 +543,10 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
           <button
             type="button"
             onClick={handleImprimir}
-            disabled={imprimiendo || !printReady}
+            disabled={imprimiendo}
             className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-slate-900 border border-[#334155] text-slate-200 hover:bg-slate-800 hover:text-white transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {imprimiendo || !printReady ? (
+            {imprimiendo ? (
               <span className="material-symbols-outlined text-sm animate-spin">progress_activity</span>
             ) : (
               <span className="material-symbols-outlined text-sm">print</span>

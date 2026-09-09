@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { generateBoletaPdf } from '../boletaPdf';
+import { generateBoletaPdf, preloadBoletaPdfLibrary } from '../boletaPdf';
 
 const mockDoc = {
   setFontSize: vi.fn(),
@@ -29,6 +29,11 @@ vi.mock('jspdf', () => {
 });
 
 describe('boletaPdf utility', () => {
+  it('preloads and reuses the PDF library', async () => {
+    await expect(preloadBoletaPdfLibrary()).resolves.toBeTruthy();
+    await expect(preloadBoletaPdfLibrary()).resolves.toBeTruthy();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
   });

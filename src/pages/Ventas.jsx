@@ -9,6 +9,7 @@ import ImprimirConfirmModal from "../components/ImprimirConfirmModal";
 import SortableTh from "../components/SortableTh";
 import Pagination from "../components/Pagination";
 import { matchSearch } from "../utils/search";
+import { preloadBoletaPdfLibrary } from "../utils/boletaPdf";
 
 export default function Ventas() {
   const { ventas, productos, cargando, formatFecha, eliminarVenta } = useInventory();
@@ -33,6 +34,14 @@ export default function Ventas() {
   // Boleta pendiente de búsqueda en salesGrouped
   const [pendingBoletaCode, setPendingBoletaCode] = useState(null);
   const itemsPorPagina = 8;
+
+  // Anticipa la descarga del generador de comprobantes mientras el usuario
+  // revisa la lista. Así el primer detalle no espera el chunk de jsPDF.
+  useEffect(() => {
+    preloadBoletaPdfLibrary().catch((error) => {
+      console.warn("No se pudo precargar el generador de comprobantes:", error);
+    });
+  }, []);
 
   // Agrupar y enriquecer ventas (base de datos con control de visibilidad por rol)
   const salesGrouped = useMemo(() => {
@@ -419,6 +428,8 @@ export default function Ventas() {
                       <td className="px-5 py-4 text-center">
                         <div className="flex items-center justify-center gap-2">
                           <button
+                            onPointerEnter={() => setDetalleVenta(s)}
+                            onFocus={() => setDetalleVenta(s)}
                             onClick={() => {
                               setDetalleVenta(s);
                               setModalDetalleAbierto(true);

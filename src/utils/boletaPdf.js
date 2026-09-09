@@ -9,9 +9,26 @@
 import { LOGO_LIGHT_DATA } from "./logoData.js";
 import { numeroALetras, parseClienteInfo } from "./comprobante.js";
 
-async function loadPdfLibrary() {
-  const pdfModule = await import("jspdf");
-  return pdfModule.jsPDF || pdfModule.default?.jsPDF || pdfModule.default;
+let pdfLibraryPromise;
+
+function loadPdfLibrary() {
+  if (!pdfLibraryPromise) {
+    pdfLibraryPromise = import("jspdf")
+      .then((pdfModule) => pdfModule.jsPDF || pdfModule.default?.jsPDF || pdfModule.default)
+      .catch((error) => {
+        pdfLibraryPromise = undefined;
+        throw error;
+      });
+  }
+  return pdfLibraryPromise;
+}
+
+/**
+ * Descarga y prepara jsPDF con anticipación para que el primer comprobante
+ * no tenga que esperar la carga del módulo al abrir el detalle de la venta.
+ */
+export function preloadBoletaPdfLibrary() {
+  return loadPdfLibrary();
 }
 
 const W = 80;   // ancho del ticket (mm) — estándar de papel térmico 80mm
