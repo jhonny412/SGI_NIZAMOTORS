@@ -198,8 +198,9 @@ describe('Venta Modals (VentaFormModal & VentaDetalleModal)', () => {
       expect(container.textContent).toContain('Empresa SAC');
     });
 
-    it('opens the production-safe preview synchronously before generating the PDF', async () => {
+    it('opens the production-safe preview and invokes the native print dialog', async () => {
       let resolvePdf;
+      let onPreviewLoad;
       generateBoletaPdf.mockReturnValueOnce(new Promise((resolve) => {
         resolvePdf = resolve;
       }));
@@ -208,6 +209,10 @@ describe('Venta Modals (VentaFormModal & VentaDetalleModal)', () => {
         document: { title: '', body: { textContent: '', style: {} } },
         location: { replace: vi.fn() },
         focus: vi.fn(),
+        print: vi.fn(),
+        addEventListener: vi.fn((event, handler) => {
+          if (event === 'load') onPreviewLoad = handler;
+        }),
         close: vi.fn(),
       };
       window.open.mockReturnValueOnce(previewWindow);
@@ -228,6 +233,9 @@ describe('Venta Modals (VentaFormModal & VentaDetalleModal)', () => {
       resolvePdf(new Blob(['pdf'], { type: 'application/pdf' }));
       await waitFor(() => expect(previewWindow.location.replace).toHaveBeenCalledWith('blob:mock'));
       expect(previewWindow.focus).toHaveBeenCalledOnce();
+      expect(previewWindow.addEventListener).toHaveBeenCalledWith('load', expect.any(Function), { once: true });
+      onPreviewLoad();
+      expect(previewWindow.print).toHaveBeenCalledOnce();
       expect(URL.revokeObjectURL).not.toHaveBeenCalled();
 
       unmount();

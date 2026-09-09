@@ -31,8 +31,9 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
   // Libera cualquier recurso de impresión pendiente solo cuando el componente
   // deja de existir. Durante la vista previa el iframe debe permanecer activo.
   useEffect(() => () => {
-    for (const { iframe, url, closeWatcher } of printResourcesRef.current) {
+    for (const { iframe, url, closeWatcher, printFallback } of printResourcesRef.current) {
       if (closeWatcher) window.clearInterval(closeWatcher);
+      if (printFallback) window.clearTimeout(printFallback);
       URL.revokeObjectURL(url);
       iframe?.remove();
     }
@@ -63,11 +64,29 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
     // obtener el PDF. La ventana se abre desde el clic original para evitar
     // que el navegador bloquee la vista previa por perder la activación.
     if (previewWindow && !previewWindow.closed) {
-      const printResource = { previewWindow, url, closeWatcher: null };
+      const printResource = {
+        previewWindow,
+        url,
+        closeWatcher: null,
+        printFallback: null,
+        printRequested: false,
+      };
       const cleanup = () => {
         if (!printResourcesRef.current.delete(printResource)) return;
         if (printResource.closeWatcher) window.clearInterval(printResource.closeWatcher);
+        if (printResource.printFallback) window.clearTimeout(printResource.printFallback);
         URL.revokeObjectURL(url);
+      };
+      const showPrintDialog = () => {
+        if (printResource.printRequested || previewWindow.closed) return;
+        printResource.printRequested = true;
+        if (printResource.printFallback) window.clearTimeout(printResource.printFallback);
+        try {
+          previewWindow.focus();
+          previewWindow.print();
+        } catch (err) {
+          console.warn("No se pudo mostrar el diálogo de impresión:", err);
+        }
       };
 
       printResourcesRef.current.add(printResource);
@@ -76,13 +95,18 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
       }, 1000);
 
       try {
+        previewWindow.addEventListener("load", showPrintDialog, { once: true });
         previewWindow.location.replace(url);
         previewWindow.focus();
+        // Algunos visores PDF reemplazan el documento y no propagan su evento
+        // load al WindowProxy. Este respaldo abre el mismo diálogo nativo.
+        printResource.printFallback = window.setTimeout(showPrintDialog, 1200);
         return;
       } catch (err) {
         console.warn("No se pudo abrir la vista previa en una pestaña:", err);
         printResourcesRef.current.delete(printResource);
         if (printResource.closeWatcher) window.clearInterval(printResource.closeWatcher);
+        if (printResource.printFallback) window.clearTimeout(printResource.printFallback);
       }
     }
 
