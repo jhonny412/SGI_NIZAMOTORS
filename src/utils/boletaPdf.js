@@ -6,19 +6,18 @@
 // que se ajusta exactamente al contenido, sin papel sobrante.
 // La librería jsPDF se importa dinámicamente solo cuando se necesita.
 // ─────────────────────────────────────────────────────────────
-import { LOGO_LIGHT_DATA } from "./logoData";
-import { numeroALetras, parseClienteInfo } from "./comprobante";
+import { LOGO_LIGHT_DATA } from "./logoData.js";
+import { numeroALetras, parseClienteInfo } from "./comprobante.js";
 
 async function loadPdfLibrary() {
-  const { default: jsPDF } = await import("jspdf");
-  return jsPDF;
+  const pdfModule = await import("jspdf");
+  return pdfModule.jsPDF || pdfModule.default?.jsPDF || pdfModule.default;
 }
 
 const W = 80;   // ancho del ticket (mm) — estándar de papel térmico 80mm
 const M = 5;    // margen izquierdo
 const R = W - 4; // margen derecho (4mm)
-const PX_TO_MM = 25.4 / 96;
-const LOGO_WIDTH_MM = 34 - (16 * PX_TO_MM);
+const LOGO_WIDTH_MM = 22;
 const LOGO_HEIGHT_MM = 12 * (LOGO_WIDTH_MM / 34);
 
 /**

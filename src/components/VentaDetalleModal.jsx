@@ -497,7 +497,7 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
             <img
               src={logoLight}
               alt="NIZA MOTORS"
-              style={{ width: "29.7667mm", maxHeight: "12mm", objectFit: "contain", margin: "0 auto" }}
+              style={{ width: "22mm", maxHeight: "8mm", objectFit: "contain", margin: "0 auto" }}
             />
           </div>
 

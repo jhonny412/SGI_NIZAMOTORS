@@ -160,7 +160,7 @@ describe('Venta Modals (VentaFormModal & VentaDetalleModal)', () => {
       expect(container.textContent).toContain('Juan Perez');
       const receiptLogos = screen.getAllByAltText('NIZA MOTORS');
       expect(receiptLogos.some((logo) => logo.className.includes('w-[40px]'))).toBe(true);
-      expect(receiptLogos.some((logo) => logo.style.width === '29.7667mm')).toBe(true);
+      expect(receiptLogos.some((logo) => logo.style.width === '22mm')).toBe(true);
 
       const printBtn = screen.getByText(/imprimir/i);
       fireEvent.click(printBtn);

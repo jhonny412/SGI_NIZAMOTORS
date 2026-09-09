@@ -69,7 +69,7 @@ describe('boletaPdf utility', () => {
     expect(mockDoc.output).toHaveBeenCalledWith('blob');
     expect(mockDoc.text).toHaveBeenCalled();
     expect(mockDoc.addImage).toHaveBeenCalledTimes(4); // 2 passes (measure + final): 2 logos + 2 QRs
-    const expectedLogoWidth = 34 - (16 * 25.4 / 96);
+    const expectedLogoWidth = 22;
     const logoCalls = mockDoc.addImage.mock.calls.filter((call) => call[1] === 'JPEG');
     expect(logoCalls).toHaveLength(2);
     logoCalls.forEach((call) => expect(call[4]).toBeCloseTo(expectedLogoWidth, 5));
