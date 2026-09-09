@@ -40,7 +40,7 @@ describe('API Service (fetchSheet & postAction)', () => {
 
   describe('postAction', () => {
     it('sends POST request with formatted body and returns data', async () => {
-      const payload = { codigo: 'P01', descripcion: 'Pastillas' };
+      const payload = { codigo: 'p01', descripcion: 'Pastillas' };
       globalThis.fetch = vi.fn().mockResolvedValue({
         ok: true,
         text: async () => JSON.stringify({ status: 'success', data: { id: 10, ...payload } })
@@ -52,7 +52,8 @@ describe('API Service (fetchSheet & postAction)', () => {
       const callArgs = globalThis.fetch.mock.calls[0];
       const requestBody = JSON.parse(callArgs[1].body);
       expect(requestBody).toEqual({
-        ...payload,
+        codigo: 'P01',
+        descripcion: 'PASTILLAS',
         sheet: 'Productos',
         action: 'create'
       });
@@ -66,6 +67,28 @@ describe('API Service (fetchSheet & postAction)', () => {
       });
 
       await expect(postAction('Productos', 'create', {})).rejects.toThrow('Código duplicado');
+    });
+
+    it('normalizes nested sale and movement text without changing internal states', async () => {
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        text: async () => JSON.stringify({ status: 'success', data: { id: 1 } })
+      });
+
+      await postAction('Ventas', 'procesarVenta', {
+        venta: { cliente: 'Juan Pérez', direccion: 'Av. Lima', metodoPago: 'efectivo' },
+        movimientos: [{ tipo: 'salida', motivo: 'Venta mostrador' }]
+      });
+
+      const requestBody = JSON.parse(globalThis.fetch.mock.calls[0][1].body);
+      expect(requestBody.venta).toEqual({
+        cliente: 'JUAN PÉREZ',
+        direccion: 'AV. LIMA',
+        metodoPago: 'EFECTIVO'
+      });
+      expect(requestBody.movimientos).toEqual([
+        { tipo: 'salida', motivo: 'VENTA MOSTRADOR' }
+      ]);
     });
 
     it('throws error if response is ok but status is error', async () => {

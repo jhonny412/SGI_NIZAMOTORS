@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useInventory } from "../context/useInventory";
 import { useTranslation } from "react-i18next";
 import Swal from "sweetalert2";
+import { toUppercaseText } from "../utils/uppercase";
 
 export default function MovementFormModal({ abierto, onCerrar }) {
   const { productos, registrarMovimiento } = useInventory();
@@ -65,7 +66,7 @@ export default function MovementFormModal({ abierto, onCerrar }) {
   function handleChange(e) {
     const { name, value } = e.target;
     setForm((prev) => {
-      const nextForm = { ...prev, [name]: name === "motivo" ? value.toUpperCase() : value };
+      const nextForm = { ...prev, [name]: name === "motivo" ? toUppercaseText(value) : value };
       // Si cambia a salida y el producto seleccionado actual tiene stock <= 0, limpiamos la selección
       if (name === "tipo" && value === "salida" && productoSeleccionado && productoSeleccionado.stock <= 0) {
         nextForm.productoId = "";

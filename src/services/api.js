@@ -1,5 +1,6 @@
 import { ENDPOINTS } from "../config/endpoints";
 import { getActiveToken } from "../utils/security";
+import { normalizeUppercaseFields } from "../utils/uppercase";
 
 const API_URL = ENDPOINTS.INVENTORY_API_URL;
 
@@ -43,8 +44,18 @@ export async function fetchSheet(sheetName) {
  * @returns {Promise<any>} The result data from the server
  */
 export async function postAction(sheetName, action, data = {}) {
+  let normalizedData = normalizeUppercaseFields(sheetName, data);
+  if (action === "procesarVenta") {
+    normalizedData = {
+      ...normalizedData,
+      venta: normalizeUppercaseFields("Ventas", data.venta),
+      movimientos: Array.isArray(data.movimientos)
+        ? data.movimientos.map((movement) => normalizeUppercaseFields("Movimientos", movement))
+        : data.movimientos,
+    };
+  }
   const body = {
-    ...data,
+    ...normalizedData,
     sheet: sheetName,
     action
   };

@@ -1,4 +1,5 @@
 import mysql from "mysql2/promise";
+import { normalizeUppercaseFields } from "../../src/utils/uppercase.js";
 
 // Mapeador de nombres de colecciones del frontend a tablas de la base de datos MySQL
 const TABLE_MAP = {
@@ -46,8 +47,6 @@ async function getValidColumns(dbPool, tableName) {
   }
   return tableColumnsCache[tableName];
 }
-
-const pad = (n) => String(n).padStart(2, '0');
 
 // Helper para normalizar valores (JSON objects -> string, ISO dates -> local DATETIME string)
 function formatValue(val) {
@@ -178,9 +177,10 @@ export async function handler(event, _context) {
           delete payload.fechaModificacion;
         }
 
+        const normalizedPayload = normalizeUppercaseFields(tableName, payload);
         const validColumns = await getValidColumns(dbPool, tableName);
         const filteredPayload = {};
-        for (const [key, val] of Object.entries(payload)) {
+        for (const [key, val] of Object.entries(normalizedPayload)) {
           if (validColumns.has(key)) {
             filteredPayload[key] = val;
           }
@@ -235,9 +235,10 @@ export async function handler(event, _context) {
           delete updateFields.fechaModificacion;
         }
 
+        const normalizedUpdateFields = normalizeUppercaseFields(tableName, updateFields);
         const validColumns = await getValidColumns(dbPool, tableName);
         const filteredUpdateFields = {};
-        for (const [key, val] of Object.entries(updateFields)) {
+        for (const [key, val] of Object.entries(normalizedUpdateFields)) {
           if (validColumns.has(key)) {
             filteredUpdateFields[key] = val;
           }
@@ -310,9 +311,10 @@ export async function handler(event, _context) {
           await conn.beginTransaction();
 
           // 1. Insertar registro de venta
+          const normalizedVenta = normalizeUppercaseFields("ventas", venta);
           const validColumns = await getValidColumns(dbPool, "ventas");
-          const vKeys = Object.keys(venta).filter(k => k !== "id" && validColumns.has(k));
-          const vVals = vKeys.map(k => formatValue(venta[k]));
+          const vKeys = Object.keys(normalizedVenta).filter(k => k !== "id" && validColumns.has(k));
+          const vVals = vKeys.map(k => formatValue(normalizedVenta[k]));
           const vQuery = `INSERT INTO ventas (\`${vKeys.join("`, `")}\`) VALUES (${vKeys.map(() => "?").join(", ")})`;
           const [vRes] = await conn.execute(vQuery, vVals);
           const ventaId = vRes.insertId;
@@ -320,7 +322,7 @@ export async function handler(event, _context) {
           // 2. Insertar movimientos y actualizar stock de productos
           if (Array.isArray(movimientos)) {
             for (const mov of movimientos) {
-              const { id: _mId, ...movFields } = mov;
+              const { id: _mId, ...movFields } = normalizeUppercaseFields("movimientos", mov);
               const mKeys = Object.keys(movFields);
               const mVals = mKeys.map(k => formatValue(movFields[k]));
               const mQuery = `INSERT INTO movimientos (\`${mKeys.join("`, `")}\`) VALUES (${mKeys.map(() => "?").join(", ")})`;

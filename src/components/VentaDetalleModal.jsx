@@ -16,6 +16,7 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
   const [enviandoWhatsApp, setEnviandoWhatsApp] = useState(false);
   const [imprimiendo, setImprimiendo] = useState(false);
   const hasPrintedRef = useRef(false);
+  const printResourcesRef = useRef(new Set());
 
   const vendedorNombre = (venta && venta.vendedor) || usuarioActivo?.nombre || "ADMIN SGI";
 
@@ -25,6 +26,16 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
       hasPrintedRef.current = false;
     }
   }, [abierto]);
+
+  // Libera cualquier recurso de impresión pendiente solo cuando el componente
+  // deja de existir. Durante la vista previa el iframe debe permanecer activo.
+  useEffect(() => () => {
+    for (const { iframe, url } of printResourcesRef.current) {
+      URL.revokeObjectURL(url);
+      iframe.remove();
+    }
+    printResourcesRef.current.clear();
+  }, []);
 
   // Generate local base64 QR Code image URL so it renders instantly in screen & print
   useEffect(() => {
@@ -53,22 +64,36 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
     iframe.style.height = "0";
     iframe.style.border = "0";
     iframe.src = url;
+    const printResource = { iframe, url };
+    printResourcesRef.current.add(printResource);
+
+    const cleanup = () => {
+      if (!printResourcesRef.current.delete(printResource)) return;
+      URL.revokeObjectURL(url);
+      iframe.remove();
+    };
+
     iframe.onload = () => {
       try {
-        iframe.contentWindow?.focus();
-        iframe.contentWindow?.print();
+        const printWindow = iframe.contentWindow;
+        if (!printWindow) {
+          cleanup();
+          return;
+        }
+        printWindow.addEventListener("afterprint", cleanup, { once: true });
+        printWindow.focus();
+        printWindow.print();
       } catch (err) {
         console.warn("No se pudo imprimir el PDF automáticamente:", err);
+        cleanup();
       }
-      setTimeout(() => {
-        URL.revokeObjectURL(url);
-        iframe.remove();
-      }, 5000);
     };
+    iframe.onerror = cleanup;
     document.body.appendChild(iframe);
   }, [venta, qrUrl, formatFecha, vendedorNombre]);
 
-  // Auto print if triggered and automatically close modal afterwards (Guarded strictly once per opening)
+  // Auto print if triggered. El detalle permanece abierto hasta que el usuario
+  // lo cierre explícitamente (guardado estrictamente una vez por apertura).
   useEffect(() => {
     if (abierto && autoImprimir && venta && !hasPrintedRef.current) {
       hasPrintedRef.current = true;
@@ -78,13 +103,10 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
         } catch (err) {
           console.error("Error al imprimir el comprobante:", err);
         }
-        if (onCerrar) {
-          onCerrar();
-        }
       }, 400);
       return () => clearTimeout(timer);
     }
-  }, [abierto, autoImprimir, venta, onCerrar, imprimirBoleta]);
+  }, [abierto, autoImprimir, venta, imprimirBoleta]);
 
   if (!abierto || !venta) return null;
 
@@ -215,7 +237,7 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
             <img
               src={logoLight}
               alt="NIZA MOTORS"
-              className="h-14 w-14 object-contain rounded-xl bg-white p-1 shadow-md shadow-amber-900/20 border border-amber-800/20"
+              className="h-14 w-[40px] object-contain rounded-xl bg-white p-1 shadow-md shadow-amber-900/20 border border-amber-800/20"
             />
             <div>
               <div className="flex items-center gap-2 mb-1">
@@ -475,7 +497,7 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
             <img
               src={logoLight}
               alt="NIZA MOTORS"
-              style={{ width: "34mm", maxHeight: "12mm", objectFit: "contain", margin: "0 auto" }}
+              style={{ width: "29.7667mm", maxHeight: "12mm", objectFit: "contain", margin: "0 auto" }}
             />
           </div>
 

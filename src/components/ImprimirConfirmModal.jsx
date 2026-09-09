@@ -29,11 +29,11 @@ export default function ImprimirConfirmModal({ abierto, boletaCode, onImprimir, 
         {/* Body */}
         <div className="relative z-10 flex flex-col items-center px-8 pt-8 pb-6 gap-4">
           {/* Logo */}
-          <div className="w-20 h-20 rounded-2xl bg-white flex items-center justify-center shadow-lg shadow-amber-900/20 border border-amber-800/20 mb-1">
+          <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center shadow-lg shadow-amber-900/20 border border-amber-800/20 mb-1">
             <img
               src={logoLight}
               alt="NIZA MOTORS"
-              className="w-16 h-16 object-contain"
+              className="w-[40px] h-auto max-h-10 object-contain"
             />
           </div>
 

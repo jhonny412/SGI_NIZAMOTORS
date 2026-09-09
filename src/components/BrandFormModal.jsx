@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useInventory } from "../context/useInventory";
 import { useTranslation } from "react-i18next";
 import Swal from "sweetalert2";
+import { toUppercaseText } from "../utils/uppercase";
 
 export default function BrandFormModal({ marca, abierto, onCerrar }) {
   const { agregarMarca, editarMarca, marcas } = useInventory();
@@ -45,7 +46,7 @@ export default function BrandFormModal({ marca, abierto, onCerrar }) {
   if (!abierto) return null;
 
   function handleChange(e) {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value.toUpperCase() }));
+    setForm((prev) => ({ ...prev, [e.target.name]: toUppercaseText(e.target.value) }));
   }
 
   function normalizarTexto(texto) {

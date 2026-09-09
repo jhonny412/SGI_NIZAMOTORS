@@ -103,12 +103,16 @@ describe('Venta Modals (VentaFormModal & VentaDetalleModal)', () => {
 
       const nameInput = container.querySelector('input[placeholder*="completo"]') || container.querySelectorAll('input[type="text"]')[1];
       if (nameInput) fireEvent.change(nameInput, { target: { value: 'Juan Perez' } });
+      expect(nameInput).toHaveValue('JUAN PEREZ');
 
       // 5. Submit valid sale
       await act(async () => {
         fireEvent.submit(form);
       });
       expect(mockInventoryContext.agregarVenta).toHaveBeenCalled();
+      expect(mockInventoryContext.agregarVenta).toHaveBeenCalledWith(expect.objectContaining({
+        cliente: 'JUAN PEREZ (DNI: 12345678)',
+      }));
 
       // 6. Test close
       const closeBtn = container.querySelector('button[type="button"]');
@@ -154,10 +158,27 @@ describe('Venta Modals (VentaFormModal & VentaDetalleModal)', () => {
       expect(container.querySelector('.modal-overlay')).toBeInTheDocument();
       expect(container.textContent).toContain('BOLETA B001-000001');
       expect(container.textContent).toContain('Juan Perez');
+      const receiptLogos = screen.getAllByAltText('NIZA MOTORS');
+      expect(receiptLogos.some((logo) => logo.className.includes('w-[40px]'))).toBe(true);
+      expect(receiptLogos.some((logo) => logo.style.width === '29.7667mm')).toBe(true);
 
       const printBtn = screen.getByText(/imprimir/i);
       fireEvent.click(printBtn);
       await waitFor(() => expect(generateBoletaPdf).toHaveBeenCalled());
+
+      const printFrame = document.body.querySelector('iframe[src="blob:mock"]');
+      expect(printFrame).toBeInTheDocument();
+      expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+
+      Object.defineProperty(printFrame.contentWindow, 'focus', { value: vi.fn(), configurable: true });
+      Object.defineProperty(printFrame.contentWindow, 'print', { value: vi.fn(), configurable: true });
+      fireEvent.load(printFrame);
+      expect(printFrame.contentWindow.print).toHaveBeenCalledOnce();
+      printFrame.contentWindow.dispatchEvent(new Event('afterprint'));
+
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock');
+      expect(printFrame).not.toBeInTheDocument();
+      expect(onCerrar).not.toHaveBeenCalled();
 
       // Legacy client matching
       rerender(

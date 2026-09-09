@@ -69,10 +69,11 @@ describe('TrasladoFormModal', () => {
       fireEvent.submit(form);
     });
 
+    expect(textarea).toHaveValue('PRÉSTAMO URGENTE');
     expect(mockInventoryContext.agregarTraslado).toHaveBeenCalledWith({
-      tiendaVecina: 'Tienda Central',
+      tiendaVecina: 'TIENDA CENTRAL',
       items: [{ productoId: 1, cantidad: 1 }],
-      notas: 'Préstamo urgente',
+      notas: 'PRÉSTAMO URGENTE',
     });
     expect(onCerrar).toHaveBeenCalled();
   });

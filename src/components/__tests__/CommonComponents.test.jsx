@@ -66,6 +66,7 @@ describe('Common Components', () => {
         <ImprimirConfirmModal abierto={true} boletaCode="B001" onImprimir={onImprimir} onOmitir={onOmitir} />
       );
       expect(screen.getByText('¿Desea imprimir el comprobante?')).toBeInTheDocument();
+      expect(screen.getByAltText('NIZA MOTORS')).toHaveClass('w-[40px]');
 
       fireEvent.click(screen.getByRole('button', { name: /sí, imprimir/i }));
       expect(onImprimir).toHaveBeenCalled();

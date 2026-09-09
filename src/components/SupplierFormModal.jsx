@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useInventory } from "../context/useInventory";
 import { useTranslation } from "react-i18next";
 import Swal from "sweetalert2";
+import { toUppercaseText } from "../utils/uppercase";
 
 export default function SupplierFormModal({ proveedor, abierto, onCerrar }) {
   const { agregarProveedor, editarProveedor, proveedores } = useInventory();
@@ -46,7 +47,7 @@ export default function SupplierFormModal({ proveedor, abierto, onCerrar }) {
 
   function handleChange(e) {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: name === "email" ? value : value.toUpperCase() }));
+    setForm((prev) => ({ ...prev, [name]: toUppercaseText(value) }));
   }
 
   function normalizarTexto(texto) {

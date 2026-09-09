@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useInventory } from "../context/useInventory";
 import { useTranslation } from "react-i18next";
 import Swal from "sweetalert2";
+import { toUppercaseText } from "../utils/uppercase";
 
 export default function TrasladoFormModal({ abierto, onCerrar }) {
   const { productos, tiendasVecinas, agregarTraslado } = useInventory();
@@ -170,7 +171,11 @@ export default function TrasladoFormModal({ abierto, onCerrar }) {
       Swal.fire({ icon: "error", title: "Error", text: "Agrega al menos un repuesto al préstamo." });
       return;
     }
-    const exito = await agregarTraslado({ tiendaVecina, items, notas });
+    const exito = await agregarTraslado({
+      tiendaVecina: toUppercaseText(tiendaVecina),
+      items,
+      notas: toUppercaseText(notas),
+    });
     if (exito) onCerrar();
   }
 
@@ -404,7 +409,7 @@ export default function TrasladoFormModal({ abierto, onCerrar }) {
               </label>
               <textarea
                 value={notas}
-                onChange={(e) => setNotas(e.target.value)}
+                onChange={(e) => setNotas(toUppercaseText(e.target.value))}
                 className="input-field min-h-16 py-2 text-sm"
                 placeholder={t("forms.transfer.notes_placeholder")}
               />

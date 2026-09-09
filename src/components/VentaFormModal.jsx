@@ -4,6 +4,7 @@ import { useAuth } from "../context/useAuth";
 import { useTranslation } from "react-i18next";
 import Swal from "sweetalert2";
 import { getLocalDateTimeString } from "../utils/dateFilter";
+import { toUppercaseText } from "../utils/uppercase";
 
 export default function VentaFormModal({ abierto, onCerrar, onVentaRegistrada }) {
   const { productos, movimientos, ventas, agregarVenta } = useInventory();
@@ -390,7 +391,7 @@ export default function VentaFormModal({ abierto, onCerrar, onVentaRegistrada })
                   <input
                     type="text"
                     value={clienteNombre}
-                    onChange={(e) => setClienteNombre(e.target.value)}
+                    onChange={(e) => setClienteNombre(toUppercaseText(e.target.value))}
                     placeholder="Nombres completos o Razón social"
                     className="input-field text-xs"
                     required={tipoDocumento !== "OTROS"}
@@ -405,7 +406,7 @@ export default function VentaFormModal({ abierto, onCerrar, onVentaRegistrada })
                   <input
                     type="text"
                     value={clienteDireccion}
-                    onChange={(e) => setClienteDireccion(e.target.value)}
+                    onChange={(e) => setClienteDireccion(toUppercaseText(e.target.value))}
                     placeholder="Calle, Av, Distrito (Opcional)"
                     className="input-field text-xs"
                   />

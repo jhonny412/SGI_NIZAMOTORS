@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useInventory } from "../context/useInventory";
 import { useTranslation } from "react-i18next";
 import Swal from "sweetalert2";
+import { toUppercaseText } from "../utils/uppercase";
 
 function InputField({ label, name, value, onChange, type = "text", required, placeholder, min, max, step, colSpan }) {
   return (
@@ -282,7 +283,7 @@ export default function ProductFormModal({ producto, abierto, onCerrar }) {
       ...prev,
       [name]: ["pCompra", "margGanancia", "stock"].includes(name)
         ? parseFloat(value) || 0
-        : name.startsWith("imagenUrl") ? value : value.toUpperCase(),
+        : name.startsWith("imagenUrl") ? value : toUppercaseText(value),
     }));
   }
 

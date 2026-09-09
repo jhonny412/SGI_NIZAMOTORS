@@ -111,9 +111,13 @@ describe('Entity Form Modals', () => {
       fireEvent.submit(form);
 
       // 3. Submit valid new name
-      fireEvent.change(input, { target: { name: 'nombre', value: 'MOTOR' } });
+      fireEvent.change(input, { target: { name: 'nombre', value: 'Motor' } });
+      const descripcion = container.querySelector('textarea[name="descripcion"]');
+      fireEvent.change(descripcion, { target: { name: 'descripcion', value: 'Partes del motor' } });
+      expect(input).toHaveValue('MOTOR');
+      expect(descripcion).toHaveValue('PARTES DEL MOTOR');
       fireEvent.submit(form);
-      expect(mockInventoryContext.agregarCategoria).toHaveBeenCalledWith(expect.objectContaining({ nombre: 'MOTOR' }));
+      expect(mockInventoryContext.agregarCategoria).toHaveBeenCalledWith(expect.objectContaining({ nombre: 'MOTOR', descripcion: 'PARTES DEL MOTOR' }));
       expect(onCerrar).toHaveBeenCalled();
 
       // 4. Edit mode
@@ -147,9 +151,13 @@ describe('Entity Form Modals', () => {
       fireEvent.submit(form);
 
       // 3. Submit valid new name
-      fireEvent.change(nombreInput, { target: { name: 'nombre', value: 'DENSO' } });
+      fireEvent.change(nombreInput, { target: { name: 'nombre', value: 'Denso' } });
+      const emailInput = container.querySelector('input[name="email"]');
+      fireEvent.change(emailInput, { target: { name: 'email', value: 'ventas@denso.pe' } });
+      expect(nombreInput).toHaveValue('DENSO');
+      expect(emailInput).toHaveValue('VENTAS@DENSO.PE');
       fireEvent.submit(form);
-      expect(mockInventoryContext.agregarProveedor).toHaveBeenCalledWith(expect.objectContaining({ nombre: 'DENSO' }));
+      expect(mockInventoryContext.agregarProveedor).toHaveBeenCalledWith(expect.objectContaining({ nombre: 'DENSO', email: 'VENTAS@DENSO.PE' }));
       expect(onCerrar).toHaveBeenCalled();
 
       // 4. Edit mode
@@ -177,6 +185,7 @@ describe('Entity Form Modals', () => {
       if (inputs.length >= 2) {
         fireEvent.change(inputs[0], { target: { value: 'Nuevo Admin' } });
         fireEvent.change(inputs[1], { target: { value: '5678' } });
+        expect(inputs[0]).toHaveValue('NUEVO ADMIN');
       }
       const select = container.querySelector('select');
       if (select) fireEvent.change(select, { target: { value: 'Admin' } });
@@ -226,6 +235,7 @@ describe('Entity Form Modals', () => {
 
       const motivoInput = container.querySelector('input[name="motivo"]') || container.querySelectorAll('input')[3];
       if (motivoInput) fireEvent.change(motivoInput, { target: { value: 'Ajuste de inventario' } });
+      expect(motivoInput).toHaveValue('AJUSTE DE INVENTARIO');
 
       await act(async () => {
         fireEvent.submit(container.querySelector('form'));

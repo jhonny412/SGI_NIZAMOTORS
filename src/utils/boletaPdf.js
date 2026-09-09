@@ -17,6 +17,9 @@ async function loadPdfLibrary() {
 const W = 80;   // ancho del ticket (mm) — estándar de papel térmico 80mm
 const M = 5;    // margen izquierdo
 const R = W - 4; // margen derecho (4mm)
+const PX_TO_MM = 25.4 / 96;
+const LOGO_WIDTH_MM = 34 - (16 * PX_TO_MM);
+const LOGO_HEIGHT_MM = 12 * (LOGO_WIDTH_MM / 34);
 
 /**
  * Dibuja el comprobante sobre un documento jsPDF y devuelve la posición Y final.
@@ -64,11 +67,18 @@ function buildTicket(doc, venta, { qrUrl, formatFecha, vendedorNombre }) {
 
   // ── Logo ──
   try {
-    doc.addImage(LOGO_LIGHT_DATA, "JPEG", W / 2 - 17, y, 34, 12);
+    doc.addImage(
+      LOGO_LIGHT_DATA,
+      "JPEG",
+      W / 2 - LOGO_WIDTH_MM / 2,
+      y,
+      LOGO_WIDTH_MM,
+      LOGO_HEIGHT_MM
+    );
   } catch (err) {
     console.warn("No se pudo insertar el logo en el PDF:", err);
   }
-  y += 13.5;
+  y += LOGO_HEIGHT_MM + 1.5;
 
   // ── Cabecera ──
   centered("NIZA MOTORS PERU S.A.C.", { size: 9, style: "bold", lh: 3.2 });

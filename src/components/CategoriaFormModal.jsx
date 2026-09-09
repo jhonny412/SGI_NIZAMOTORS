@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useInventory } from "../context/useInventory";
 import Swal from "sweetalert2";
+import { toUppercaseText } from "../utils/uppercase";
 
 export default function CategoriaFormModal({ categoria, abierto, onCerrar }) {
   const { agregarCategoria, editarCategoria, categorias } = useInventory();
@@ -46,7 +47,7 @@ export default function CategoriaFormModal({ categoria, abierto, onCerrar }) {
     const { name, value } = e.target;
     setForm((prev) => ({
       ...prev,
-      [name]: name === "nombre" ? value.toUpperCase() : value,
+      [name]: toUppercaseText(value),
     }));
   }
 

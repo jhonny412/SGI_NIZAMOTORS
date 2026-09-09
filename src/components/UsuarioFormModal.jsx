@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toUppercaseText } from "../utils/uppercase";
 
 export default function UsuarioFormModal({ usuario, onGuardar, onCerrar }) {
   const esEdicion = !!usuario;
@@ -77,7 +78,7 @@ export default function UsuarioFormModal({ usuario, onGuardar, onCerrar }) {
             <input
               type="text"
               value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
+              onChange={(e) => setNombre(toUppercaseText(e.target.value))}
               placeholder="Ej: Carlos Pérez"
               className="input-field"
               required
