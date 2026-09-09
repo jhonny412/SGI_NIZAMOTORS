@@ -58,6 +58,8 @@ describe('Productos Page', () => {
         pVenta: 50,
         utilidad: 10,
         stock: 0,
+        fechaRegistro: '2026-09-08 10:30:00',
+        fechaModificacion: '2026-09-08 11:45:00',
         imagenUrl: 'https://example.com/img1.jpg',
         imagenUrl2: 'https://example.com/img2.jpg',
         imagenUrl3: 'https://example.com/img3.jpg',
@@ -98,6 +100,7 @@ describe('Productos Page', () => {
     proveedores: [{ id: 1, nombre: 'Bosch Perú' }],
     eliminarProducto: vi.fn(),
     editarProducto: vi.fn(),
+    formatFecha: (fecha) => fecha ? fecha.split(' ')[0].split('-').reverse().join('/') + ' ' + (fecha.split(' ')[1] || '00:00:00') : '',
   };
 
   const renderWithContext = (ui) => {
@@ -119,6 +122,7 @@ describe('Productos Page', () => {
   it('handles search, filters, sorting, excel export, and modals', async () => {
     const { container } = renderWithContext(<Productos />);
     expect(container.textContent).toContain('Pastillas de Freno');
+    expect(container.textContent).toContain('08/09/2026');
 
     // 1. Search filter
     const searchInput = container.querySelector('input[type="text"]');

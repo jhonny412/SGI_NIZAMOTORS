@@ -140,6 +140,10 @@ export default async function handler(req, res) {
 
       if (currentAction === "create") {
         delete payload.id;
+        if (tableName === "productos") {
+          delete payload.fechaRegistro;
+          delete payload.fechaModificacion;
+        }
 
         const validColumns = await getValidColumns(dbPool, tableName);
         const filteredPayload = {};
@@ -182,6 +186,10 @@ export default async function handler(req, res) {
         const { id, ...updateFields } = payload;
         if (!id) {
           return res.status(400).json({ status: "error", message: "Se requiere 'id' para editar un registro" });
+        }
+        if (tableName === "productos") {
+          delete updateFields.fechaRegistro;
+          delete updateFields.fechaModificacion;
         }
 
         const validColumns = await getValidColumns(dbPool, tableName);

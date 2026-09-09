@@ -32,6 +32,8 @@ export interface Producto {
   pVenta: number;
   proveedorId?: number | null;
   activo?: boolean;
+  readonly fechaRegistro?: string;
+  readonly fechaModificacion?: string;
 }
 
 export interface Proveedor {

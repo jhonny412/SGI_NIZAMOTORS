@@ -12,7 +12,7 @@ import { ENDPOINTS } from "../config/endpoints";
 
 
 export default function Productos() {
-  const { productos, eliminarProducto, editarProducto, proveedores, marcas, cargando } = useInventory();
+  const { productos, eliminarProducto, editarProducto, proveedores, marcas, cargando, formatFecha } = useInventory();
   const { usuarioActivo } = useAuth();
   const { t } = useTranslation();
   const esAdmin = usuarioActivo?.rol?.toLowerCase() === "admin" || usuarioActivo?.rol?.toLowerCase() === "superadmin";
@@ -480,6 +480,7 @@ export default function Productos() {
                       <SortableTh campo="pVenta" align="right" orden={orden} onSort={toggleSort}>{t("pages.productos.table.sale_price")}</SortableTh>
                       {esAdmin && <SortableTh campo="utilidad" align="right" orden={orden} onSort={toggleSort}>{t("pages.productos.table.utility")}</SortableTh>}
                       <SortableTh campo="proveedorNombre" orden={orden} onSort={toggleSort}>{t("pages.productos.table.supplier")}</SortableTh>
+                      <SortableTh campo="fechaRegistro" orden={orden} onSort={toggleSort}>{t("pages.productos.table.date")}</SortableTh>
                       <SortableTh align="center" orden={orden} onSort={toggleSort}>{t("pages.productos.table.actions")}</SortableTh>
                     </tr>
                   </thead>
@@ -505,6 +506,16 @@ export default function Productos() {
                           <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-950 text-slate-200 text-xs px-2.5 py-1.5 rounded-lg border border-[#334155] shadow-xl z-50 whitespace-normal min-w-[120px] max-w-xs text-center font-normal">
                             {p.proveedorNombre}
                           </div>
+                        </td>
+                        <td className="text-slate-500 text-xs whitespace-nowrap">
+                          <div title={t("pages.productos.table.registered_date")} className="font-medium text-slate-700 dark:text-slate-300">
+                            {formatFecha(p.fechaRegistro).split(" ")[0] || "—"}
+                          </div>
+                          {p.fechaModificacion && (
+                            <div title={t("pages.productos.table.modified_date")} className="mt-0.5 text-[10px] text-slate-400">
+                              {t("pages.productos.table.modified_short")} {formatFecha(p.fechaModificacion).split(" ")[0]}
+                            </div>
+                          )}
                         </td>
                         <td>
                           <div className="flex items-center justify-center gap-1">
@@ -537,7 +548,7 @@ export default function Productos() {
                       </tr>
                     ))}
                     {itemsPagina.length === 0 && (
-                      <tr><td colSpan={esAdmin ? 11 : 8} className="py-12 text-center text-slate-400">{t("pages.productos.no_products")}</td></tr>
+                      <tr><td colSpan={esAdmin ? 12 : 9} className="py-12 text-center text-slate-400">{t("pages.productos.no_products")}</td></tr>
                     )}
                   </tbody>
                 </table>
