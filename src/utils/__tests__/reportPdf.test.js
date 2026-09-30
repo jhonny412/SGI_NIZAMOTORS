@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { generateVentasPdf, generateMovimientosPdf, generateKardexPdf } from '../reportPdf';
+import { generateVentasPdf, generateMovimientosPdf, generateKardexPdf, generateDashboardPdf, generateChartDataUrl } from '../reportPdf';
 
 const mockDoc = {
   internal: {
@@ -127,4 +127,127 @@ describe('PDF Generation Utilities (reportPdf)', () => {
     expect(result).toContain('data:application/pdf');
     expect(mockAutoTable).toHaveBeenCalled();
   });
+
+  it('generates Dashboard PDF properly with sales breakdown, top products and critical stock', async () => {
+    const result = await generateDashboardPdf({
+      usuario: 'Admin',
+      totalProductos: 15,
+      valorInventario: 4500,
+      valorVentaInventario: 7200,
+      periodoVentasLabel: 'Semana Actual',
+      ventasResumen: {
+        totalDinero: 1200,
+        totalOperaciones: 5,
+        ticketPromedio: 240,
+        totalUnidades: 8,
+      },
+      ventasDesglose: [
+        { label: 'LUN', dateFormatted: '23/03', totalDinero: 500, totalOperaciones: 2, totalUnidades: 3, pct: 41.7 },
+        { label: 'MAR', dateFormatted: '24/03', totalDinero: 700, totalOperaciones: 3, totalUnidades: 5, pct: 58.3 },
+      ],
+      categoriaFiltro: 'Filtros',
+      topProductos: [
+        { descripcion: 'Filtro de Aceite', codigo: 'FIL-01', categoria: 'Filtros', marca: 'Bosch', cantidadVendida: 5, totalDinero: 250, stockActual: 10 },
+      ],
+      stockCritico: [
+        { codigo: 'BUJ-01', descripcion: 'Bujía', marca: 'Denso', stock: 0 },
+      ],
+      preview: true,
+    });
+
+    expect(result).toContain('data:application/pdf');
+    expect(mockAutoTable).toHaveBeenCalled();
+  });
+
+  it('renders chart data URL for donut and bar charts when canvas 2D context is available', () => {
+    // Mock getContext('2d') on HTMLCanvasElement prototype
+    const mockCtx = {
+      scale: vi.fn(),
+      fillRect: vi.fn(),
+      strokeRect: vi.fn(),
+      fillText: vi.fn(),
+      beginPath: vi.fn(),
+      moveTo: vi.fn(),
+      lineTo: vi.fn(),
+      stroke: vi.fn(),
+      arc: vi.fn(),
+      closePath: vi.fn(),
+      fill: vi.fn(),
+    };
+
+    const originalGetContext = HTMLCanvasElement.prototype.getContext;
+    const originalToDataURL = HTMLCanvasElement.prototype.toDataURL;
+
+    HTMLCanvasElement.prototype.getContext = vi.fn().mockReturnValue(mockCtx);
+    HTMLCanvasElement.prototype.toDataURL = vi.fn().mockReturnValue('data:image/png;base64,mockchartpng');
+
+    try {
+      const tortaUrl = generateChartDataUrl({
+        title: 'Distribución de Ventas',
+        tipo: 'torta',
+        data: [
+          { label: 'Lunes', value: 100, color: '#f59e0b', valueFormatted: 'S/. 100.00' },
+          { label: 'Martes', value: 200, color: '#10b981', valueFormatted: 'S/. 200.00' },
+        ],
+        centerLabel: 'S/. 300.00',
+        centerSub: 'Total',
+      });
+
+      expect(tortaUrl).toBe('data:image/png;base64,mockchartpng');
+      expect(mockCtx.arc).toHaveBeenCalled();
+
+      const barrasUrl = generateChartDataUrl({
+        title: 'Ventas por Semana',
+        tipo: 'barras',
+        data: [
+          { label: 'Sem 1', value: 500, valueFormatted: 'S/. 500.00' },
+        ],
+      });
+
+      expect(barrasUrl).toBe('data:image/png;base64,mockchartpng');
+      expect(mockCtx.fillRect).toHaveBeenCalled();
+
+      // Test empty state
+      const emptyUrl = generateChartDataUrl({
+        data: [],
+      });
+      expect(emptyUrl).toBe('data:image/png;base64,mockchartpng');
+    } finally {
+      HTMLCanvasElement.prototype.getContext = originalGetContext;
+      HTMLCanvasElement.prototype.toDataURL = originalToDataURL;
+    }
+  });
+
+  it('embeds chart images when customChartVentasImg and customChartTopProductosImg are passed', async () => {
+    await generateDashboardPdf({
+      usuario: 'Admin',
+      chartVentasImg: 'data:image/png;base64,mockventaschart',
+      ventasDesglose: [
+        { label: 'LUN', dateFormatted: '23/03', totalDinero: 500, totalOperaciones: 2, totalUnidades: 3, pct: 100 },
+      ],
+      chartTopProductosImg: 'data:image/png;base64,mocktopchart',
+      topProductos: [
+        { descripcion: 'Filtro', codigo: 'F-1', categoria: 'Filtros', marca: 'Niza', cantidadVendida: 3, totalDinero: 90 },
+      ],
+      preview: true,
+    });
+
+    expect(mockDoc.addImage).toHaveBeenCalledWith(
+      'data:image/png;base64,mockventaschart',
+      'PNG',
+      expect.any(Number),
+      expect.any(Number),
+      expect.any(Number),
+      expect.any(Number)
+    );
+    expect(mockDoc.addImage).toHaveBeenCalledWith(
+      'data:image/png;base64,mocktopchart',
+      'PNG',
+      expect.any(Number),
+      expect.any(Number),
+      expect.any(Number),
+      expect.any(Number)
+    );
+  });
 });
+
