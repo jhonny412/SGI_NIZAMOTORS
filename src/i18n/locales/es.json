@@ -123,7 +123,7 @@
         "view": "Ver detalle",
         "edit": "Editar",
         "delete": "Eliminar",
-        "qr": "Ver etiqueta QR"
+        "qr": "Ver etiqueta"
       },
       "no_products": "No se encontraron productos",
       "pagination": {
@@ -132,13 +132,24 @@
         "next": "Siguiente"
       },
       "qr": {
-        "title": "Etiqueta QR del producto",
-        "subtitle": "Imprime y pega esta etiqueta para escanear el repuesto",
+        "title": "Etiqueta del producto",
+        "subtitle": "Etiqueta con un solo código para identificar el repuesto",
         "print": "Imprimir etiqueta",
         "hint": "El código contiene el identificador del producto. Al escanearlo desde cualquier buscador se cargará automáticamente.",
-        "error": "No se pudo generar el código QR.",
+        "error": "No se pudo generar la etiqueta.",
         "popup_blocked_title": "Ventana bloqueada",
-        "popup_blocked_text": "Permite las ventanas emergentes del navegador para imprimir la etiqueta."
+        "popup_blocked_text": "Permite las ventanas emergentes del navegador para imprimir la etiqueta.",
+        "save_jpg": "Guardar JPG",
+        "save_pdf": "Guardar PDF",
+        "save_error_title": "No se pudo generar el PDF",
+        "save_error_text": "Intenta nuevamente o guarda la etiqueta en JPG.",
+        "choose_title": "¿Qué código debe llevar la etiqueta?",
+        "choose_subtitle": "Elige un solo tipo de código antes de ver, imprimir o guardar la etiqueta",
+        "option_qr": "Código QR",
+        "option_qr_hint": "Para escanear con la cámara del celular",
+        "option_barcode": "Código de barras",
+        "option_barcode_hint": "Para lectores láser USB",
+        "change_type": "Cambiar tipo"
       }
     },
     "categorias": {

@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, fireEvent } from '@testing-library/react';
 import Layout from '../Layout';
 import Sidebar from '../Sidebar';
+import { APP_VERSION } from '../../config/app';
 import { AuthContext } from '../../context/AuthContext';
 import { UIContext } from '../../context/UIContext';
 import { InventoryContext } from '../../context/InventoryContext';
@@ -67,7 +68,9 @@ describe('Layout and Sidebar Components', () => {
     const { container, rerender } = renderWithProviders(<Sidebar />);
 
     expect(container.textContent).toContain('Niza Motors');
-    expect(container.textContent).toMatch(/(?:Versión|Version) 1\.0/);
+    expect(container.textContent).toMatch(
+      new RegExp(`(?:Versión|Version) ${APP_VERSION.replace(/\./g, '\\.')}`)
+    );
 
     // Click all nav buttons and groups
     const navButtons = container.querySelectorAll('nav button');
@@ -90,7 +93,7 @@ describe('Layout and Sidebar Components', () => {
 
     const expandBtn = container.querySelector('button[aria-label*="Expandir"]') || container.querySelector('aside button');
     if (expandBtn) fireEvent.click(expandBtn);
-    expect(container.textContent).toContain('v1.0');
+    expect(container.textContent).toContain(`v${APP_VERSION}`);
 
     // Test Seller role
     rerender(

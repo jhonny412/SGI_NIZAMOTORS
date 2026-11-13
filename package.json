@@ -1,7 +1,7 @@
 {
   "name": "sgi",
   "private": true,
-  "version": "1.0.1",
+  "version": "1.2",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -23,6 +23,7 @@
     "gridjs-react": "^6.1.1",
     "i18next": "^26.0.10",
     "i18next-browser-languagedetector": "^8.2.1",
+    "jsbarcode": "^3.12.1",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
     "mysql2": "^3.23.0",

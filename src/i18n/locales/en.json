@@ -121,7 +121,7 @@
         "view": "View details",
         "edit": "Edit",
         "delete": "Delete",
-        "qr": "View QR label"
+        "qr": "View label"
       },
       "no_products": "No products found",
       "pagination": {
@@ -130,13 +130,24 @@
         "next": "Next"
       },
       "qr": {
-        "title": "Product QR label",
-        "subtitle": "Print and stick this label to scan the part",
+        "title": "Product label",
+        "subtitle": "Label with a single code to identify the part",
         "print": "Print label",
         "hint": "The code contains the product identifier. Scanning it from any search field loads the product automatically.",
-        "error": "The QR code could not be generated.",
+        "error": "The label could not be generated.",
         "popup_blocked_title": "Popup blocked",
-        "popup_blocked_text": "Allow popups in the browser to print the label."
+        "popup_blocked_text": "Allow popups in the browser to print the label.",
+        "save_jpg": "Save JPG",
+        "save_pdf": "Save PDF",
+        "save_error_title": "The PDF could not be generated",
+        "save_error_text": "Please try again or save the label as JPG.",
+        "choose_title": "Which code should the label include?",
+        "choose_subtitle": "Choose a single code type before viewing, printing or saving the label",
+        "option_qr": "QR code",
+        "option_qr_hint": "To scan with the phone camera",
+        "option_barcode": "Barcode",
+        "option_barcode_hint": "For USB laser scanners",
+        "change_type": "Change type"
       }
     },
     "categorias": {
