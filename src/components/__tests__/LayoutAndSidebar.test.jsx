@@ -122,4 +122,24 @@ describe('Layout and Sidebar Components', () => {
     expect(container.textContent).toMatch(/Auditoría|Audit Log/);
     expect(container.textContent).toMatch(/Configuración|Configuration/);
   });
+
+  it('muestra el aviso de actualización durante 5 días y luego lo oculta', () => {
+    vi.useFakeTimers();
+    try {
+      // 15/11/2026: dentro de los 5 días desde el 13/11/2026
+      vi.setSystemTime(new Date(2026, 10, 15, 10, 0, 0));
+      const visible = renderWithProviders(<Sidebar />);
+      expect(visible.container.textContent).toMatch(/Nueva versión|New version/);
+      expect(visible.container.textContent).toContain('13/11/2026');
+      visible.unmount();
+
+      // 20/11/2026: el periodo de 5 días ya terminó
+      vi.setSystemTime(new Date(2026, 10, 20, 10, 0, 0));
+      const oculto = renderWithProviders(<Sidebar />);
+      expect(oculto.container.textContent).not.toMatch(/Nueva versión|New version/);
+      oculto.unmount();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

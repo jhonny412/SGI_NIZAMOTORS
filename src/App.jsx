@@ -5,6 +5,7 @@ import { InventoryProvider } from "./context/InventoryContext";
 import { useAuth } from "./context/useAuth";
 import { useUI } from "./context/useUI";
 import Layout from "./components/Layout";
+import VersionCallout from "./components/VersionCallout";
 import Login from "./pages/Login";
 import { ROUTES } from "./config/routes";
 import { initLogger, flushPendingLogs } from "./utils/logger";
@@ -77,6 +78,7 @@ function AppContent() {
 
   return (
     <Layout>
+      <VersionCallout />
       <Suspense fallback={<PageLoadingFallback />}>
         {renderPage()}
       </Suspense>

@@ -18,7 +18,19 @@
     "change_theme_dark": "Change to dark theme",
     "switch_lang": "Switch to {{lang}}",
     "spanish": "Spanish",
-    "english": "English"
+    "english": "English",
+    "version_notice_title": "New version!",
+    "version_notice_text": "The system was updated to version {{version}} on {{fecha}}.",
+    "version_notice_badge": "NEW",
+    "version_alert_badge": "What's new",
+    "version_alert_title": "New version {{version}}!",
+    "version_alert_ok": "Got it",
+    "version_alert_new_1": "Product search by QR code and barcode",
+    "version_alert_new_2": "Product labels exportable to PDF and JPG",
+    "version_alert_new_3": "Better adaptability on mobile, tablet and PC",
+    "version_alert_reopen": "View version notice",
+    "version_callout_updated": "Updated on {{fecha}}",
+    "version_callout_more": "See what's new"
   },
   "menu": {
     "dashboard": "Dashboard",

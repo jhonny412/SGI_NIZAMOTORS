@@ -5,7 +5,8 @@ import { ROUTES } from "../config/routes";
 import { useTranslation } from "react-i18next";
 import logoDark from "../assets/logo.png";
 import logoLight from "../assets/logo-light.png";
-import { APP_VERSION } from "../config/app";
+import { APP_VERSION, APP_RELEASE_DATE, debeMostrarAvisoVersion, formatearFechaAviso } from "../config/app";
+import { mostrarAvisoVersion } from "../utils/versionNotice";
 
 export default function Sidebar() {
   const { paginaActiva, setPaginaActiva, sidebarAbierto, setSidebarAbierto, tema } = useUI();
@@ -13,6 +14,10 @@ export default function Sidebar() {
   const { t } = useTranslation();
 
   const [openGroups, setOpenGroups] = useState({});
+
+  // Aviso de actualización: visible solo durante los primeros días tras el release.
+  const avisoVersion = useMemo(() => debeMostrarAvisoVersion(), []);
+  const fechaVersion = formatearFechaAviso(APP_RELEASE_DATE);
 
   const toggleGroup = (groupId) => {
     setOpenGroups((prev) => ({
@@ -406,37 +411,81 @@ export default function Sidebar() {
             })}
           </nav>
 
-          {/* Footer: estado del sistema y versión */}
+          {/* Footer: aviso de versión, estado del sistema y versión */}
           <div className="border-t border-slate-200/80 dark:border-[#334155]/60 p-3.5">
             {sidebarAbierto ? (
-              <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/40 p-2.5 backdrop-blur-md">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[9.5px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-500">{t("common.status")}</span>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="rounded-md border border-amber-500/25 bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-black tracking-wide text-amber-700 dark:text-amber-400"
-                      title={`${t("common.software_version")} ${APP_VERSION}`}
-                    >
-                      {t("common.version")} {APP_VERSION}
+              <>
+                {avisoVersion && (
+                  <button
+                    type="button"
+                    onClick={() => mostrarAvisoVersion(t)}
+                    title={t("common.version_alert_reopen")}
+                    className="aviso-version group relative mb-2 flex w-full cursor-pointer items-start gap-2 overflow-hidden rounded-xl bg-[var(--aviso-bg)] p-2.5 text-left text-[var(--aviso-ink)] shadow-lg shadow-sky-300/50 ring-1 ring-white/50 transition-transform hover:scale-[1.02] active:scale-[0.99]"
+                  >
+                    <span className="relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--aviso-ink)] text-[var(--aviso-soft)]">
+                      <span className="material-symbols-outlined text-base leading-none">campaign</span>
                     </span>
-                    <span className="flex h-2 w-2 relative">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    <span className="relative z-10 min-w-0 flex-1">
+                      <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider">
+                        {t("common.version_notice_title")}
+                        <span className="rounded-full bg-[var(--aviso-ink)] px-1.5 py-0.5 text-[8px] font-black tracking-wide text-[var(--aviso-soft)]">
+                          {t("common.version_notice_badge")}
+                        </span>
+                      </span>
+                      <span className="mt-0.5 block text-[11px] font-bold leading-snug">
+                        {t("common.version_notice_text", { version: APP_VERSION, fecha: fechaVersion })}
+                      </span>
                     </span>
+                    <span className="relative z-10 material-symbols-outlined mt-0.5 text-base leading-none transition-transform group-hover:translate-x-0.5">
+                      chevron_right
+                    </span>
+                  </button>
+                )}
+                <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/40 p-2.5 backdrop-blur-md">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[9.5px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-500">{t("common.status")}</span>
+                    <div className="flex items-center gap-2">
+                      <span
+                        data-version-anchor
+                        className="rounded-md border border-amber-500/25 bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-black tracking-wide text-amber-700 dark:text-amber-400"
+                        title={`${t("common.software_version")} ${APP_VERSION}`}
+                      >
+                        {t("common.version")} {APP_VERSION}
+                      </span>
+                      <span className="flex h-2 w-2 relative">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                      </span>
+                    </div>
+                  </div>
+                  <p className="mt-1 text-xs font-semibold text-slate-700 dark:text-slate-300">{t("common.synced")}</p>
+                  <div className="mt-2 pt-2 border-t border-slate-200/60 dark:border-slate-800/80 text-[10px] text-center font-bold tracking-wider text-slate-500 dark:text-slate-400 uppercase flex items-center justify-center gap-1">
+                    <a href="https://www.solbinx.com" target="_blank" rel="noopener noreferrer" className="text-amber-600 dark:text-amber-400 font-extrabold tracking-widest hover:underline">www.solbinx.com</a>
                   </div>
                 </div>
-                <p className="mt-1 text-xs font-semibold text-slate-700 dark:text-slate-300">{t("common.synced")}</p>
-                <div className="mt-2 pt-2 border-t border-slate-200/60 dark:border-slate-800/80 text-[10px] text-center font-bold tracking-wider text-slate-500 dark:text-slate-400 uppercase flex items-center justify-center gap-1">
-                  <a href="https://www.solbinx.com" target="_blank" rel="noopener noreferrer" className="text-amber-600 dark:text-amber-400 font-extrabold tracking-widest hover:underline">www.solbinx.com</a>
-                </div>
-              </div>
+              </>
             ) : (
               <div className="hidden lg:flex justify-center">
                 <span
-                  className="rounded-md border border-amber-500/25 bg-amber-500/10 px-1.5 py-1 text-[9px] font-black tracking-wide text-amber-700 dark:text-amber-400"
-                  title={`${t("common.software_version")} ${APP_VERSION}`}
+                  data-version-anchor
+                  className={`relative rounded-md px-1.5 py-1 text-[9px] font-black tracking-wide ${
+                    avisoVersion
+                      ? "bg-[var(--aviso-bg)] text-[var(--aviso-ink)] shadow-md shadow-sky-300/50 ring-2 ring-white/60"
+                      : "border border-amber-500/25 bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                  }`}
+                  title={
+                    avisoVersion
+                      ? `${t("common.software_version")} ${APP_VERSION} · ${t("common.version_notice_text", { version: APP_VERSION, fecha: fechaVersion })}`
+                      : `${t("common.software_version")} ${APP_VERSION}`
+                  }
                 >
                   v{APP_VERSION}
+                  {avisoVersion && (
+                    <span className="absolute -right-1 -top-1 flex h-2.5 w-2.5">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-500 opacity-75" />
+                      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-white dark:ring-slate-950" />
+                    </span>
+                  )}
                 </span>
               </div>
             )}

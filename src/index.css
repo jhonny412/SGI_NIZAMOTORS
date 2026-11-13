@@ -25,6 +25,14 @@
     --brand-glow: var(--color-brand-glow);
     
     --table-row-hover: rgba(245, 158, 11, 0.08);
+
+    /* Avisos de versión: tono azul suave */
+    --aviso-bg: #7dd3fc;
+    --aviso-ink: #0c4a6e;
+    --aviso-soft: #e0f2fe;
+    --aviso-glow: rgba(125, 211, 252, 0.55);
+    /* Color del efecto de barrido (#fef0d9) */
+    --aviso-barrido: #fef0d9;
     
     --bg-grad-1: rgba(245, 158, 11, 0.04);
     --bg-grad-2: rgba(100, 116, 139, 0.03);
@@ -379,6 +387,125 @@
 
 .scan-line {
   animation: scanLine 2.2s ease-in-out infinite alternate;
+}
+
+/* Aviso de actualización del menú lateral: brillo intermitente + destello */
+@keyframes noticeGlow {
+  0%, 100% { box-shadow: 0 0 0 0 var(--aviso-glow, rgba(125, 211, 252, 0.55)); }
+  50% { box-shadow: 0 0 0 7px rgba(125, 211, 252, 0); }
+}
+
+@keyframes noticeShine {
+  0% { transform: translateX(-140%) skewX(-18deg); }
+  55%, 100% { transform: translateX(320%) skewX(-18deg); }
+}
+
+.aviso-version {
+  animation: noticeGlow 2.4s ease-out infinite;
+}
+
+.aviso-version::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 45%;
+  background: linear-gradient(90deg, transparent, var(--aviso-barrido, rgba(14, 165, 233, 0.75)), transparent);
+  animation: noticeShine 3.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aviso-version,
+  .aviso-version::after {
+    animation: none;
+  }
+}
+
+/* Alerta emergente de nueva versión (SweetAlert2) */
+.sgi-version-alert {
+  text-align: center;
+}
+
+.sgi-version-alert__icon {
+  width: 68px;
+  height: 68px;
+  margin: 0 auto 10px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--aviso-soft, #e0f2fe);
+  background: var(--aviso-ink, #0c4a6e);
+  box-shadow: 0 12px 26px -10px rgba(125, 211, 252, 0.9);
+  animation: noticeGlow 2.4s ease-out infinite;
+}
+
+.sgi-version-alert__icon .material-symbols-outlined {
+  font-size: 36px;
+}
+
+.sgi-version-alert__badge {
+  display: inline-block;
+  margin: 0 0 8px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--aviso-ink, #0c4a6e);
+  color: var(--aviso-soft, #e0f2fe);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.sgi-version-alert__title {
+  margin: 0 0 6px;
+  font-size: 21px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.sgi-version-alert__text {
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.45;
+  opacity: 0.9;
+}
+
+.sgi-version-alert__list {
+  margin: 0 auto;
+  padding: 0;
+  max-width: 340px;
+  list-style: none;
+  display: grid;
+  gap: 7px;
+  text-align: left;
+}
+
+.sgi-version-alert__list li {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 12.5px;
+  line-height: 1.35;
+  font-weight: 600;
+}
+
+.sgi-version-alert__list li::before {
+  content: "✓";
+  color: var(--aviso-ink, #0c4a6e);
+  font-weight: 900;
+  flex-shrink: 0;
+}
+
+.sgi-version-alert-popup .swal2-close {
+  color: var(--aviso-ink, #0c4a6e);
+}
+
+.sgi-version-alert-popup .swal2-close:hover {
+  color: var(--aviso-ink, #0c4a6e);
+  opacity: 0.75;
 }
 
 .material-symbols-outlined {

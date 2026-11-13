@@ -41,6 +41,7 @@ export default function Layout({ children }) {
           <div className="flex h-14 sm:h-16 items-center justify-between gap-3 px-3 sm:px-4 md:px-6 lg:px-8">
             <div className="flex min-w-0 items-center gap-2 sm:gap-3">
               <button
+                data-menu-anchor
                 onClick={() => setSidebarAbierto(!sidebarAbierto)}
                 className="inline-flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl border border-slate-300 dark:border-[#334155] bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-350 shadow-xs transition-all hover:bg-amber-500 hover:border-amber-500 hover:text-slate-950 dark:hover:bg-amber-500 dark:hover:text-slate-950 shrink-0 cursor-pointer"
                 aria-label={t("common.toggle_menu")}
