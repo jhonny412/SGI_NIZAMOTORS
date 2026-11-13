@@ -1,5 +1,7 @@
 import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import ScanButton from "./ScanButton";
+import { findProductByScan, getScanSearchTerm } from "../utils/barcode";
 import { generateDashboardPdf } from "../utils/reportPdf";
 
 const SLICE_COLORS = [
@@ -49,6 +51,15 @@ export default function DashboardTopProducts({
   const [criterioOrden, setCriterioOrden] = useState("cantidad"); // "cantidad" | "dinero"
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const [exportandoPdf, setExportandoPdf] = useState(false);
+
+  /** Búsqueda por QR / código de barras dentro del ranking de productos. */
+  const handleScanProducto = (codigo) => {
+    const producto = findProductByScan(productos, codigo);
+    if (!producto) return false;
+    setBusqueda(getScanSearchTerm(producto));
+    setCategoriaSeleccionada("todas");
+    return true;
+  };
 
   // Compilar lista unificada de categorías
   const listaCategorias = useMemo(() => {
@@ -373,26 +384,33 @@ export default function DashboardTopProducts({
 
       {/* Sub-barra con búsqueda y selector de cantidad */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 my-3">
-        <div className="relative flex-1 max-w-sm">
-          <input
-            type="text"
-            placeholder="Buscar por código, repuesto o marca..."
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            className="w-full pl-8 pr-8 py-1.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-300 dark:border-slate-800 focus:border-amber-500 rounded-xl text-xs text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500/30 transition-all"
+        <div className="flex flex-1 max-w-sm items-center gap-2">
+          <div className="relative flex-1">
+            <input
+              type="text"
+              placeholder="Buscar por código, repuesto o marca..."
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              className="w-full pl-8 pr-8 py-1.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-300 dark:border-slate-800 focus:border-amber-500 rounded-xl text-xs text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500/30 transition-all"
+            />
+            <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm">
+              search
+            </span>
+            {busqueda && (
+              <button
+                type="button"
+                onClick={() => setBusqueda("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-sm">close</span>
+              </button>
+            )}
+          </div>
+          <ScanButton
+            onScan={handleScanProducto}
+            title={t("scan.button")}
+            className="h-8 w-8 shrink-0"
           />
-          <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm">
-            search
-          </span>
-          {busqueda && (
-            <button
-              type="button"
-              onClick={() => setBusqueda("")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-sm">close</span>
-            </button>
-          )}
         </div>
 
         <div className="flex items-center gap-2 self-end sm:self-auto text-xs text-slate-600 dark:text-slate-400">

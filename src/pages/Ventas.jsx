@@ -8,7 +8,9 @@ import VentaDetalleModal from "../components/VentaDetalleModal";
 import ImprimirConfirmModal from "../components/ImprimirConfirmModal";
 import SortableTh from "../components/SortableTh";
 import Pagination from "../components/Pagination";
+import ScanButton from "../components/ScanButton";
 import { matchSearch } from "../utils/search";
+import { findProductByScan, getScanSearchTerm } from "../utils/barcode";
 import { preloadBoletaPdfLibrary } from "../utils/boletaPdf";
 
 export default function Ventas() {
@@ -201,6 +203,15 @@ export default function Ventas() {
     }));
   }
 
+  /** Búsqueda por QR / código de barras: filtra las ventas que incluyen el producto. */
+  function handleScanProducto(codigo) {
+    const producto = findProductByScan(productos, codigo);
+    if (!producto) return false;
+    setBusqueda(getScanSearchTerm(producto));
+    setPagina(1);
+    return true;
+  }
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
@@ -337,7 +348,13 @@ export default function Ventas() {
                 setBusqueda(e.target.value);
                 setPagina(1);
               }}
-              className="w-full bg-[#0b1326] border border-[#334155] rounded-lg pl-10 pr-4 py-2 text-sm text-slate-100 placeholder-slate-400 focus:ring-1 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all" 
+              className="w-full bg-[#0b1326] border border-[#334155] rounded-lg pl-10 pr-12 py-2 text-sm text-slate-100 placeholder-slate-400 focus:ring-1 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all" 
+            />
+            <ScanButton
+              onScan={handleScanProducto}
+              title={t("scan.button")}
+              variant="inline"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 w-8"
             />
           </div>
         </div>

@@ -5,6 +5,8 @@ import { useTranslation, Trans } from "react-i18next";
 import { SkeletonTable } from "../components/Skeleton";
 import SortableTh from "../components/SortableTh";
 import Pagination from "../components/Pagination";
+import ScanButton from "../components/ScanButton";
+import { findProductByScan } from "../utils/barcode";
 import { generateKardexPdf } from "../utils/reportPdf";
 
 export default function Kardex() {
@@ -71,6 +73,15 @@ export default function Kardex() {
     setOrden((prev) => ({ campo, dir: prev.campo === campo && prev.dir === "asc" ? "desc" : "asc" }));
   }
 
+  /** Búsqueda por QR / código de barras: selecciona el producto del kardex. */
+  function handleScanProducto(codigo) {
+    const producto = findProductByScan(productos, codigo);
+    if (!producto) return false;
+    setProductoId(String(producto.id));
+    setPagina(1);
+    return true;
+  }
+
   // Daily snapshots calculations
   const snapshots = useMemo(() => {
     const todayStr = new Date().toISOString().split("T")[0];
@@ -126,7 +137,7 @@ export default function Kardex() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="flex flex-col gap-1">
             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">{t("pages.kardex.filters.product")}</label>
-            <div className="relative">
+            <div className="flex items-center gap-2">
               <select 
                 value={productoId} 
                 onChange={(e) => { setProductoId(e.target.value); setPagina(1); }} 
@@ -137,6 +148,11 @@ export default function Kardex() {
                   <option key={p.id} value={p.id}>[{p.codigo}] {p.descripcion}</option>
                 ))}
               </select>
+              <ScanButton
+                onScan={handleScanProducto}
+                title={t("scan.button")}
+                className="h-[42px] w-[42px] shrink-0"
+              />
             </div>
           </div>
           <div className="flex flex-col gap-1">

@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useInventory } from "../context/useInventory";
 import TrasladoFormModal from "../components/TrasladoFormModal";
+import ScanButton from "../components/ScanButton";
+import { findProductByScan, getScanSearchTerm } from "../utils/barcode";
 import Swal from "sweetalert2";
 
 export default function Creditos() {
@@ -18,6 +20,14 @@ export default function Creditos() {
     const prod = getProducto(productoId);
     return prod ? `${prod.descripcion} (${prod.codigo})` : "Producto no encontrado";
   };
+
+  /** Búsqueda por QR / código de barras: filtra los préstamos del repuesto leído. */
+  function handleScanProducto(codigo) {
+    const producto = findProductByScan(productos, codigo);
+    if (!producto) return false;
+    setBusqueda(getScanSearchTerm(producto));
+    return true;
+  }
 
   const getItemsLabel = (traslado) => {
     if (traslado.items && traslado.items.length > 0) {
@@ -184,7 +194,13 @@ export default function Creditos() {
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder="Buscar por repuesto, tienda o notas..."
-              className="input-field pl-9 w-full py-2.5"
+              className="input-field pl-9 pr-12 w-full py-2.5"
+            />
+            <ScanButton
+              onScan={handleScanProducto}
+              title={t("scan.button")}
+              variant="inline"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 w-8"
             />
           </div>
           <div className="flex bg-slate-100 dark:bg-slate-950 p-1 rounded-lg overflow-x-auto gap-1">
@@ -256,7 +272,7 @@ export default function Creditos() {
                           <span className="text-xs text-slate-400 dark:text-slate-500 font-medium italic whitespace-nowrap">Resuelto</span>
                         )}
                         {tItem.notas && (
-                          <button onClick={() => mostrarNotas(tItem.notas)} className="p-1.5 text-slate-400 hover:text-amber-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer" title={t("pages.creditos.actions.view_notes")}>
+                          <button onClick={() => mostrarNotas(tItem.notas)} className="p-2.5 sm:p-1.5 text-slate-400 hover:text-amber-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer" title={t("pages.creditos.actions.view_notes")}>
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>

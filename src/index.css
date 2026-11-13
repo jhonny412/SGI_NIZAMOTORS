@@ -294,7 +294,7 @@
   }
 
   .page-title {
-    @apply text-2xl font-extrabold text-slate-100 tracking-tight;
+    @apply text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight;
   }
 
   /* Pagination */
@@ -367,6 +367,18 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Línea animada del visor de escaneo QR / código de barras */
+@keyframes scanLine {
+  0% { top: 6%; opacity: 0.15; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { top: 92%; opacity: 0.15; }
+}
+
+.scan-line {
+  animation: scanLine 2.2s ease-in-out infinite alternate;
 }
 
 .material-symbols-outlined {

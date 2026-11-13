@@ -3,6 +3,8 @@ import { useInventory } from "../context/useInventory";
 import { useTranslation } from "react-i18next";
 import Swal from "sweetalert2";
 import { toUppercaseText } from "../utils/uppercase";
+import { findProductByScan } from "../utils/barcode";
+import ScanButton from "./ScanButton";
 
 export default function TrasladoFormModal({ abierto, onCerrar }) {
   const { productos, tiendasVecinas, agregarTraslado } = useInventory();
@@ -143,6 +145,40 @@ export default function TrasladoFormModal({ abierto, onCerrar }) {
     setSearchTerm("");
   }
 
+  /**
+   * Selecciona el producto leído con el escáner QR / código de barras.
+   * @returns {boolean} false solo si el código no corresponde a un producto
+   */
+  function handleScan(codigo) {
+    const prod = findProductByScan(productos, codigo);
+    if (!prod) return false;
+
+    const disponible = stockDisponible(prod.id);
+    if (disponible <= 0) {
+      Swal.fire({
+        icon: "warning",
+        title: "Sin stock suficiente",
+        text: t("scan.no_stock", { codigo: prod.codigo || prod.id }),
+      });
+      return true;
+    }
+
+    setProductoSelId(String(prod.id));
+    setSearchTerm(prod.descripcion);
+    setDropdownAbierto(false);
+    return true;
+  }
+
+  /** Enter en el buscador: el lector USB envía el código y Enter. */
+  function handleSearchKeyDown(e) {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    const prod =
+      findProductByScan(productos, searchTerm) ||
+      (productosFiltrados.length === 1 ? productosFiltrados[0] : null);
+    if (prod) handleScan(prod.codigo || String(prod.id));
+  }
+
   function handleEliminarItem(productoId) {
     const prod = productos.find((p) => p.id === productoId);
     Swal.fire({
@@ -251,9 +287,16 @@ export default function TrasladoFormModal({ abierto, onCerrar }) {
                           }
                         }}
                         onFocus={() => setDropdownAbierto(true)}
-                        className="input-field pl-9 w-full text-sm py-2.5"
+                        onKeyDown={handleSearchKeyDown}
+                        className="input-field pl-9 pr-12 w-full text-sm py-2.5"
                       />
                       <span className="material-symbols-outlined absolute left-3 top-3 text-slate-400 text-sm">search</span>
+                      <ScanButton
+                        onScan={handleScan}
+                        title={t("scan.button")}
+                        variant="inline"
+                        className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 w-8"
+                      />
                     </div>
 
                     {/* Menú predictivo flotante */}
@@ -308,6 +351,7 @@ export default function TrasladoFormModal({ abierto, onCerrar }) {
                   <button
                     type="button"
                     onClick={handleAgregar}
+                    title="Agregar repuesto"
                     disabled={!productoSelId || maxCantidad === 0}
                     className="btn-primary py-2.5 px-4.5 text-sm rounded-xl disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                   >
@@ -417,20 +461,20 @@ export default function TrasladoFormModal({ abierto, onCerrar }) {
           </div>
 
           {/* Botones de acción */}
-          <div className="flex items-center justify-between gap-3 px-6 py-4.5 border-t border-[#334155]/60 bg-slate-950/30 rounded-b-2xl">
+          <div className="flex flex-col gap-3 border-t border-[#334155]/60 bg-slate-950/30 px-6 py-4.5 rounded-b-2xl sm:flex-row sm:items-center sm:justify-between">
             <span className="text-xs font-medium text-slate-400">
               {items.length > 0
                 ? <><strong className="text-slate-300 font-bold">{items.length}</strong> repuesto(s) — <strong className="text-amber-500 font-extrabold">S/. {totalGeneral.toFixed(2)}</strong></>
                 : "Sin repuestos seleccionados"}
             </span>
-            <div className="flex gap-2">
-              <button type="button" onClick={handleCerrar} className="btn-secondary py-2 px-5 text-sm rounded-xl">
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <button type="button" onClick={handleCerrar} className="btn-secondary py-2 px-5 text-sm rounded-xl w-full sm:w-auto">
                 {t("forms.transfer.cancel")}
               </button>
               <button
                 type="submit"
                 disabled={!tiendaVecina || items.length === 0}
-                className="btn-primary py-2 px-5 text-sm rounded-xl disabled:opacity-40 disabled:cursor-not-allowed"
+                className="btn-primary py-2 px-5 text-sm rounded-xl disabled:opacity-40 disabled:cursor-not-allowed w-full sm:w-auto"
               >
                 <span className="material-symbols-outlined text-sm">check</span>
                 Registrar Préstamo

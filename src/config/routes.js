@@ -17,6 +17,7 @@ const Creditos     = lazy(() => import("../pages/Creditos"));
 const Auditoria    = lazy(() => import("../pages/Auditoria"));
 const ReportePage  = lazy(() => import("../pages/ReportePage"));
 const GestionUsuarios = lazy(() => import("../pages/GestionUsuarios"));
+const Configuracion   = lazy(() => import("../pages/Configuracion"));
 
 
 /**
@@ -140,6 +141,14 @@ export const ROUTES = {
     groupLabelKey: "menu.seguridad",
     groupIcon: "shield",
     groupColor: "text-rose-500 dark:text-rose-400"
+  },
+  configuracion: {
+    id: "configuracion",
+    component: Configuracion,
+    roles: ["superadmin"],
+    labelKey: "menu.configuracion",
+    icon: "settings",
+    iconColor: "text-amber-500 dark:text-amber-400"
   },
   "reporte-ventas": {
     id: "reporte-ventas",

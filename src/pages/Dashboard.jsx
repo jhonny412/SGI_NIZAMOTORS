@@ -425,7 +425,7 @@ export default function Dashboard() {
                   <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">En línea</h3>
                 </div>
               </div>
-              <p className="mt-4 text-xs text-slate-500 dark:text-slate-400 relative z-10">Sincronizado con Sheets en tiempo real</p>
+              <p className="mt-4 text-xs text-slate-500 dark:text-slate-400 relative z-10">Sincronizado con Base de Datos en tiempo real</p>
             </div>
           </>
         )}

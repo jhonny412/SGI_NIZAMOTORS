@@ -6,8 +6,11 @@ import { SkeletonTable } from "../components/Skeleton";
 import ProductFormModal from "../components/ProductFormModal";
 import Pagination from "../components/Pagination";
 import SortableTh from "../components/SortableTh";
+import ScanButton from "../components/ScanButton";
+import ProductQrModal from "../components/ProductQrModal";
 import Swal from "sweetalert2";
 import { matchSearch } from "../utils/search";
+import { findProductByScan, getScanSearchTerm } from "../utils/barcode";
 import { ENDPOINTS } from "../config/endpoints";
 
 
@@ -24,6 +27,7 @@ export default function Productos() {
   const [pagina, setPagina] = useState(1);
   const [orden, setOrden] = useState({ campo: "id", dir: "asc" });
   const [modalProducto, setModalProducto] = useState(null);
+  const [qrProducto, setQrProducto] = useState(null);
 
   // Estados para la búsqueda de imagen
   const [imagenModalProducto, setImagenModalProducto] = useState(null);
@@ -121,6 +125,15 @@ export default function Productos() {
 
   function toggleSort(campo) {
     setOrden((prev) => ({ campo, dir: prev.campo === campo && prev.dir === "asc" ? "desc" : "asc" }));
+  }
+
+  /** Búsqueda por QR / código de barras: filtra la tabla por el producto leído. */
+  function handleScanProducto(codigo) {
+    const producto = findProductByScan(productos, codigo);
+    if (!producto) return false;
+    setBusqueda(getScanSearchTerm(producto));
+    setPagina(1);
+    return true;
   }
 
   function getStockBadge(stock) {
@@ -382,14 +395,14 @@ export default function Productos() {
           <p className="text-sm text-slate-500 mt-1">{t("pages.productos.found", { count: filtrados.length })}</p>
         </div>
         {esAdmin && (
-          <div className="flex gap-2">
-            <button onClick={handleExportExcel} className="btn-success">
+          <div className="flex w-full flex-wrap gap-2 sm:w-auto">
+            <button onClick={handleExportExcel} className="btn-success flex-1 sm:flex-none">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               {t("pages.productos.export_excel")}
             </button>
-            <button onClick={() => setModalProducto({})} className="btn-primary">
+            <button onClick={() => setModalProducto({})} className="btn-primary flex-1 sm:flex-none">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
@@ -407,12 +420,20 @@ export default function Productos() {
           ) : (
             <>
               <div className="grid grid-cols-1 gap-3 border-b border-slate-100 pb-5 mb-5 sm:grid-cols-2 lg:grid-cols-4">
-                <input
-                  placeholder={t("pages.productos.search_placeholder")}
-                  value={busqueda}
-                  onChange={(e) => { setBusqueda(e.target.value); setPagina(1); }}
-                  className="input-field"
-                />
+                <div className="relative">
+                  <input
+                    placeholder={t("pages.productos.search_placeholder")}
+                    value={busqueda}
+                    onChange={(e) => { setBusqueda(e.target.value); setPagina(1); }}
+                    className="input-field pr-12"
+                  />
+                  <ScanButton
+                    onScan={handleScanProducto}
+                    title={t("scan.button")}
+                    variant="inline"
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 w-8"
+                  />
+                </div>
                 <select
                   value={filtroCategoria}
                   onChange={(e) => { setFiltroCategoria(e.target.value); setPagina(1); }}
@@ -520,9 +541,16 @@ export default function Productos() {
                         <td>
                           <div className="flex items-center justify-center gap-1">
                             <button
+                              onClick={() => setQrProducto(p)}
+                              title={t("pages.productos.actions.qr")}
+                              className="p-2.5 sm:p-1.5 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-500/10 rounded-lg transition-colors"
+                            >
+                              <span className="material-symbols-outlined text-lg leading-none">qr_code_2</span>
+                            </button>
+                            <button
                               onClick={() => setImagenModalProducto(p)}
                               title={t("pages.productos.actions.search_image") || "Buscar imagen"}
-                              className="p-1.5 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-500/10 rounded-lg transition-colors"
+                              className="p-2.5 sm:p-1.5 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-500/10 rounded-lg transition-colors"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -531,12 +559,12 @@ export default function Productos() {
                             </button>
                             {esAdmin && (
                               <>
-                                <button onClick={() => setModalProducto(p)} title={t("pages.productos.actions.edit")} className="p-1.5 text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-500/10 rounded-lg transition-colors">
+                                <button onClick={() => setModalProducto(p)} title={t("pages.productos.actions.edit")} className="p-2.5 sm:p-1.5 text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-500/10 rounded-lg transition-colors">
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                   </svg>
                                 </button>
-                                <button onClick={() => eliminarProducto(p.id)} title={t("pages.productos.actions.delete")} className="p-1.5 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10 rounded-lg transition-colors">
+                                <button onClick={() => eliminarProducto(p.id)} title={t("pages.productos.actions.delete")} className="p-2.5 sm:p-1.5 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10 rounded-lg transition-colors">
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                   </svg>
@@ -612,6 +640,8 @@ export default function Productos() {
       </div>
 
       <ProductFormModal producto={modalProducto && modalProducto.id ? modalProducto : null} abierto={modalProducto !== null} onCerrar={() => setModalProducto(null)} />
+
+      {qrProducto && <ProductQrModal producto={qrProducto} onCerrar={() => setQrProducto(null)} />}
 
 
 

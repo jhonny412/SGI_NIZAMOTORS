@@ -5,7 +5,9 @@ import { SkeletonTable } from "../components/Skeleton";
 import MovementFormModal from "../components/MovementFormModal";
 import Pagination from "../components/Pagination";
 import SortableTh from "../components/SortableTh";
+import ScanButton from "../components/ScanButton";
 import { matchSearch } from "../utils/search";
+import { findProductByScan, getScanSearchTerm } from "../utils/barcode";
 
 export default function Movimientos() {
   const { movimientos, productos, cargando, formatFecha } = useInventory();
@@ -51,6 +53,15 @@ export default function Movimientos() {
     setOrden((prev) => ({ campo, dir: prev.campo === campo && prev.dir === "asc" ? "desc" : "asc" }));
   }
 
+  /** Búsqueda por QR / código de barras: filtra los movimientos del producto. */
+  function handleScanProducto(codigo) {
+    const producto = findProductByScan(productos, codigo);
+    if (!producto) return false;
+    setBusqueda(getScanSearchTerm(producto));
+    setPagina(1);
+    return true;
+  }
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="page-header">
@@ -73,12 +84,20 @@ export default function Movimientos() {
           ) : (
             <>
               <div className="flex flex-col sm:flex-row gap-3 border-b border-slate-100 pb-5 mb-5 justify-between items-stretch sm:items-center">
-                <input
-                  placeholder={t("pages.movimientos.search_placeholder")}
-                  value={busqueda}
-                  onChange={(e) => { setBusqueda(e.target.value); setPagina(1); }}
-                  className="input-field w-full sm:max-w-md"
-                />
+                <div className="relative w-full sm:max-w-md">
+                  <input
+                    placeholder={t("pages.movimientos.search_placeholder")}
+                    value={busqueda}
+                    onChange={(e) => { setBusqueda(e.target.value); setPagina(1); }}
+                    className="input-field w-full pr-12"
+                  />
+                  <ScanButton
+                    onScan={handleScanProducto}
+                    title={t("scan.button")}
+                    variant="inline"
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 w-8"
+                  />
+                </div>
                 <select value={filtroTipo} onChange={(e) => { setFiltroTipo(e.target.value); setPagina(1); }} className="select-field w-full sm:w-48">
                   <option value="todos">{t("pages.movimientos.all_types")}</option>
                   <option value="entrada">{t("pages.movimientos.entries")}</option>

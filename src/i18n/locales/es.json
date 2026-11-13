@@ -42,9 +42,14 @@
     "auditoria": "Auditoría",
     "seguridad": "Seguridad",
     "usuarios": "Gestión Usuarios",
-    "administracion": "Administración"
+    "administracion": "Administración",
+    "configuracion": "Configuración"
   },
   "pages": {
+    "configuracion": {
+      "title": "Configuración del Sistema",
+      "subtitle": "Parámetros globales, integraciones, seguridad y mantenimiento para Super Administradores."
+    },
     "dashboard": {
       "title": "Panel ejecutivo",
       "subtitle": "Vista general de existencias, valor y actividad reciente.",
@@ -117,13 +122,23 @@
       "actions": {
         "view": "Ver detalle",
         "edit": "Editar",
-        "delete": "Eliminar"
+        "delete": "Eliminar",
+        "qr": "Ver etiqueta QR"
       },
       "no_products": "No se encontraron productos",
       "pagination": {
         "showing": "Mostrando <bold>{{count}}</bold> de <bold>{{total}}</bold> productos",
         "previous": "Anterior",
         "next": "Siguiente"
+      },
+      "qr": {
+        "title": "Etiqueta QR del producto",
+        "subtitle": "Imprime y pega esta etiqueta para escanear el repuesto",
+        "print": "Imprimir etiqueta",
+        "hint": "El código contiene el identificador del producto. Al escanearlo desde cualquier buscador se cargará automáticamente.",
+        "error": "No se pudo generar el código QR.",
+        "popup_blocked_title": "Ventana bloqueada",
+        "popup_blocked_text": "Permite las ventanas emergentes del navegador para imprimir la etiqueta."
       }
     },
     "categorias": {
@@ -515,5 +530,38 @@
     "brand_updated": "Marca actualizada",
     "brand_in_use": "Hay productos asociados a esta marca",
     "delete_brand_title": "¿Eliminar marca?"
+  },
+  "scan": {
+    "button": "Escanear QR / código de barras",
+    "title": "Escanear código",
+    "subtitle": "Apunta la cámara al QR o al código de barras del producto",
+    "starting": "Iniciando cámara...",
+    "scanning": "Buscando un código...",
+    "camera": "Cámara",
+    "torch": "Linterna",
+    "manual": "Escribir código",
+    "manual_title": "Código manual",
+    "manual_placeholder": "Código y presiona Enter",
+    "manual_use": "Usar código",
+    "close": "Cerrar",
+    "retry": "Reintentar",
+    "accept": "Entendido",
+    "usb_hint": "O usa un lector USB: el código se escribe en el buscador y Enter lo selecciona.",
+    "not_found_title": "Código no encontrado",
+    "not_found_text": "Ningún producto coincide con el código «{{codigo}}».",
+    "no_stock": "El producto {{codigo}} no tiene stock disponible para esta operación.",
+    "errors": {
+      "permission": "No se pudo acceder a la cámara. Revisa los permisos del navegador.",
+      "no_camera": "No se encontró una cámara disponible en este dispositivo.",
+      "busy": "La cámara está siendo usada por otra aplicación.",
+      "insecure": "La cámara requiere una conexión segura (HTTPS) o ejecutarse desde localhost.",
+      "generic": "No se pudo iniciar el escáner. Intenta nuevamente.",
+      "not_image": "El archivo seleccionado no es una imagen."
+    },
+    "image": "Cargar imagen",
+    "image_hint": "Carga una foto del código: archivo, arrastrar y soltar, o pegar con Ctrl+V.",
+    "image_processing": "Leyendo la imagen...",
+    "image_not_found": "No se encontró un QR o código de barras legible en la imagen.",
+    "drop_here": "Suelta la imagen aquí"
   }
 }

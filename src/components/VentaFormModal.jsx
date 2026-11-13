@@ -5,6 +5,8 @@ import { useTranslation } from "react-i18next";
 import Swal from "sweetalert2";
 import { getLocalDateTimeString } from "../utils/dateFilter";
 import { toUppercaseText } from "../utils/uppercase";
+import { findProductByScan } from "../utils/barcode";
+import ScanButton from "./ScanButton";
 
 export default function VentaFormModal({ abierto, onCerrar, onVentaRegistrada }) {
   const { productos, movimientos, ventas, agregarVenta } = useInventory();
@@ -145,6 +147,48 @@ export default function VentaFormModal({ abierto, onCerrar, onVentaRegistrada })
     const disponible = stockDisponible(prod.id);
     setCantidadSel(Math.min(1, disponible));
     setDropdownAbierto(false);
+  }
+
+  /**
+   * Código leído con el escáner QR / código de barras (o un lector USB).
+   * @returns {boolean} false solo si el código no corresponde a un producto
+   */
+  function handleScan(codigo) {
+    const prod = findProductByScan(productos, codigo);
+    if (!prod) return false;
+
+    const disponible = stockDisponible(prod.id);
+    if (disponible <= 0) {
+      Swal.fire({
+        icon: "warning",
+        title: t("forms.movement.insufficient_stock"),
+        text: t("scan.no_stock", { codigo: prod.codigo || prod.id }),
+      });
+      return true;
+    }
+
+    handleSelectProducto(prod);
+    return true;
+  }
+
+  /** Enter en el buscador: el lector USB envía el código y Enter. */
+  function handleSearchKeyDown(e) {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    const prod =
+      findProductByScan(productos, searchTerm) ||
+      (productosFiltrados.length === 1 ? productosFiltrados[0] : null);
+    if (!prod) return;
+
+    if (stockDisponible(prod.id) <= 0) {
+      Swal.fire({
+        icon: "warning",
+        title: t("forms.movement.insufficient_stock"),
+        text: t("scan.no_stock", { codigo: prod.codigo || prod.id }),
+      });
+      return;
+    }
+    handleSelectProducto(prod);
   }
 
   // Manejar cambio de margen y recalcular precio
@@ -440,9 +484,16 @@ export default function VentaFormModal({ abierto, onCerrar, onVentaRegistrada })
                           if (productoSel) setProductoSel(null);
                         }}
                         onFocus={() => setDropdownAbierto(true)}
-                        className="input-field pl-9 w-full text-xs py-2.5"
+                        onKeyDown={handleSearchKeyDown}
+                        className="input-field pl-9 pr-12 w-full text-xs py-2.5"
                       />
                       <span className="material-symbols-outlined absolute left-3 top-3 text-slate-400 text-sm">search</span>
+                      <ScanButton
+                        onScan={handleScan}
+                        title={t("scan.button")}
+                        variant="inline"
+                        className="absolute right-1.5 top-1/2 -translate-y-1/2 h-7 w-7"
+                      />
                     </div>
 
                     {/* Menú predictivo flotante */}

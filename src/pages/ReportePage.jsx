@@ -5,7 +5,9 @@ import { useAuth } from "../context/useAuth";
 import { useUI } from "../context/useUI";
 import { useTranslation, Trans } from "react-i18next";
 import { SkeletonTable } from "../components/Skeleton";
+import ScanButton from "../components/ScanButton";
 import { filterByDateRange, getDefaultDateRange } from "../utils/dateFilter";
+import { findProductByScan, getScanSearchTerm } from "../utils/barcode";
 import { generateVentasPdf, generateMovimientosPdf, generateKardexPdf } from "../utils/reportPdf";
 import { exportVentasExcel } from "../utils/exportVentasExcel";
 import { exportMovimientosExcel } from "../utils/exportMovimientosExcel";
@@ -165,6 +167,14 @@ export default function ReportePage() {
     setMovTipoFilter("todos");
     setMotivoSearch("");
     setPagina(1);
+  };
+
+  /** Búsqueda por QR / código de barras para el filtro de productos. */
+  const handleScanProducto = (codigo) => {
+    const producto = findProductByScan(productos, codigo);
+    if (!producto) return false;
+    setProductoFilter(getScanSearchTerm(producto));
+    return true;
   };
 
   const datosFiltrados = useMemo(() => {
@@ -362,20 +372,20 @@ export default function ReportePage() {
           <h1 className="page-title">{t(config.titleKey)}</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{t("pages.reportes.subtitle")}</p>
         </div>
-        <div className="flex gap-3 flex-shrink-0">
-          <button type="button" onClick={openFilterModal} className="btn-secondary">
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:flex-nowrap sm:gap-3">
+          <button type="button" onClick={openFilterModal} className="btn-secondary flex-1 sm:flex-none">
             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
             </svg>
             Filtros
           </button>
-          <button type="button" onClick={handleExportExcel} className="btn-success">
+          <button type="button" onClick={handleExportExcel} className="btn-success flex-1 sm:flex-none">
             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             {t("pages.ventas.export_excel")}
           </button>
-          <button type="button" onClick={handleVistaPrevia} className="btn-primary">
+          <button type="button" onClick={handleVistaPrevia} className="btn-primary flex-1 sm:flex-none">
             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
             </svg>
@@ -562,13 +572,21 @@ export default function ReportePage() {
                       <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
                         {t("pages.reportes.filters.product")}
                       </label>
-                      <input
-                        type="text"
-                        value={productoFilter}
-                        onChange={(e) => setProductoFilter(e.target.value)}
-                        placeholder={t("pages.reportes.filters.product_placeholder")}
-                        className="input-field w-full"
-                      />
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={productoFilter}
+                          onChange={(e) => setProductoFilter(e.target.value)}
+                          placeholder={t("pages.reportes.filters.product_placeholder")}
+                          className="input-field w-full pr-12"
+                        />
+                        <ScanButton
+                          onScan={handleScanProducto}
+                          title={t("scan.button")}
+                          variant="inline"
+                          className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 w-8"
+                        />
+                      </div>
                     </div>
                     <div>
                       <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">

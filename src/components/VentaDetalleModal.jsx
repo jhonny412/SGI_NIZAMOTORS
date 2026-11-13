@@ -442,7 +442,7 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
             <h4 className="text-xs font-black uppercase tracking-wider text-slate-500">
               {t("sale.items_list")}
             </h4>
-            <div className="border border-[#334155]/40 rounded-2xl overflow-hidden bg-slate-900/20">
+            <div className="border border-[#334155]/40 rounded-2xl overflow-x-auto bg-slate-900/20">
               <table className="min-w-full divide-y divide-[#334155]/30">
                 <thead className="bg-slate-950/40">
                   <tr>
@@ -539,12 +539,12 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
         </div>
 
         {/* Footer Actions */}
-        <div className="flex justify-end gap-2.5 px-6 py-4.5 border-t border-[#334155]/60 bg-slate-950/30 rounded-b-3xl">
+        <div className="flex flex-col gap-2 border-t border-[#334155]/60 bg-slate-950/30 px-4 py-4 rounded-b-3xl sm:flex-row sm:justify-end sm:gap-2.5 sm:px-6 sm:py-4.5">
           <button
             type="button"
             onClick={handleImprimir}
             disabled={imprimiendo}
-            className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-slate-900 border border-[#334155] text-slate-200 hover:bg-slate-800 hover:text-white transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+            className="inline-flex w-full items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-slate-900 border border-[#334155] text-slate-200 hover:bg-slate-800 hover:text-white transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed sm:w-auto"
           >
             {imprimiendo ? (
               <span className="material-symbols-outlined text-sm animate-spin">progress_activity</span>
@@ -558,7 +558,7 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
             type="button"
             onClick={handleEnviarWhatsApp}
             disabled={enviandoWhatsApp}
-            className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#1ebe5b] text-slate-950 font-bold transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+            className="inline-flex w-full items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#1ebe5b] text-slate-950 font-bold transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed sm:w-auto"
           >
             {enviandoWhatsApp ? (
               <span className="material-symbols-outlined text-sm animate-spin">progress_activity</span>
@@ -573,7 +573,7 @@ export default function VentaDetalleModal({ abierto, venta, onCerrar, formatFech
           <button
             type="button"
             onClick={onCerrar}
-            className="btn-secondary py-2.5 px-5 text-sm rounded-xl font-bold active:scale-98"
+            className="btn-secondary py-2.5 px-5 text-sm rounded-xl font-bold active:scale-98 w-full sm:w-auto"
           >
             {t("common.close")}
           </button>

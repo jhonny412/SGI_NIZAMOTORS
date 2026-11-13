@@ -19,6 +19,7 @@ describe('Route Registry Configuration (ROUTES)', () => {
       'reporte-salidas',
       'reporte-kardex',
       'usuarios',
+      'configuracion',
     ];
 
     requiredRoutes.forEach((routeKey) => {
@@ -30,8 +31,9 @@ describe('Route Registry Configuration (ROUTES)', () => {
     });
   });
 
-  it('restricts auditoria only to superadmin', () => {
+  it('restricts auditoria and configuracion to superadmin', () => {
     expect(ROUTES.auditoria.roles).toEqual(['superadmin']);
+    expect(ROUTES.configuracion.roles).toEqual(['superadmin']);
   });
 
   it('allows admin and vendedor on commercial routes', () => {

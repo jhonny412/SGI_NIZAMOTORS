@@ -42,9 +42,14 @@
     "auditoria": "Audit Log",
     "seguridad": "Security",
     "usuarios": "User Management",
-    "administracion": "Administration"
+    "administracion": "Administration",
+    "configuracion": "Configuration"
   },
   "pages": {
+    "configuracion": {
+      "title": "System Configuration",
+      "subtitle": "Global settings, integrations, security, and maintenance for Super Administrators."
+    },
     "dashboard": {
       "title": "Executive Dashboard",
       "subtitle": "Overview of stock, value, and recent activity.",
@@ -115,13 +120,23 @@
       "actions": {
         "view": "View details",
         "edit": "Edit",
-        "delete": "Delete"
+        "delete": "Delete",
+        "qr": "View QR label"
       },
       "no_products": "No products found",
       "pagination": {
         "showing": "Showing <bold>{{count}}</bold> of <bold>{{total}}</bold> products",
         "previous": "Previous",
         "next": "Next"
+      },
+      "qr": {
+        "title": "Product QR label",
+        "subtitle": "Print and stick this label to scan the part",
+        "print": "Print label",
+        "hint": "The code contains the product identifier. Scanning it from any search field loads the product automatically.",
+        "error": "The QR code could not be generated.",
+        "popup_blocked_title": "Popup blocked",
+        "popup_blocked_text": "Allow popups in the browser to print the label."
       }
     },
     "categorias": {
@@ -513,5 +528,38 @@
     "brand_updated": "Brand updated",
     "brand_in_use": "There are products associated with this brand",
     "delete_brand_title": "Delete brand?"
+  },
+  "scan": {
+    "button": "Scan QR / barcode",
+    "title": "Scan code",
+    "subtitle": "Point the camera at the product QR or barcode",
+    "starting": "Starting camera...",
+    "scanning": "Looking for a code...",
+    "camera": "Camera",
+    "torch": "Flashlight",
+    "manual": "Type code",
+    "manual_title": "Manual code",
+    "manual_placeholder": "Code and press Enter",
+    "manual_use": "Use code",
+    "close": "Close",
+    "retry": "Retry",
+    "accept": "Got it",
+    "usb_hint": "Or use a USB scanner: the code is typed into the search field and Enter selects it.",
+    "not_found_title": "Code not found",
+    "not_found_text": "No product matches the code «{{codigo}}».",
+    "no_stock": "Product {{codigo}} has no stock available for this operation.",
+    "errors": {
+      "permission": "Could not access the camera. Check the browser permissions.",
+      "no_camera": "No camera was found on this device.",
+      "busy": "The camera is being used by another application.",
+      "insecure": "The camera requires a secure connection (HTTPS) or localhost.",
+      "generic": "The scanner could not start. Please try again.",
+      "not_image": "The selected file is not an image."
+    },
+    "image": "Load image",
+    "image_hint": "Load a photo of the code: file, drag and drop, or paste with Ctrl+V.",
+    "image_processing": "Reading image...",
+    "image_not_found": "No readable QR or barcode was found in the image.",
+    "drop_here": "Drop the image here"
   }
 }

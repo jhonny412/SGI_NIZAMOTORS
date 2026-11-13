@@ -3,6 +3,8 @@ import { useInventory } from "../context/useInventory";
 import { useTranslation } from "react-i18next";
 import Swal from "sweetalert2";
 import { toUppercaseText } from "../utils/uppercase";
+import { findProductByScan } from "../utils/barcode";
+import ScanButton from "./ScanButton";
 
 export default function MovementFormModal({ abierto, onCerrar }) {
   const { productos, registrarMovimiento } = useInventory();
@@ -89,6 +91,46 @@ export default function MovementFormModal({ abierto, onCerrar }) {
       motivo: form.motivo,
     });
     if (ok) onCerrar();
+  }
+
+  /**
+   * Selecciona un producto aplicando las validaciones del tipo de movimiento.
+   * @returns {boolean} false solo cuando no hay producto (código no encontrado)
+   */
+  function aplicarProducto(producto) {
+    if (!producto) return false;
+
+    if (form.tipo === "salida" && Number(producto.stock) <= 0) {
+      Swal.fire({
+        icon: "warning",
+        title: t("forms.movement.insufficient_stock"),
+        text: t("scan.no_stock", { codigo: producto.codigo || producto.id }),
+      });
+      return true;
+    }
+
+    setForm((prev) => ({ ...prev, productoId: String(producto.id) }));
+    setSearchTerm(producto.descripcion || "");
+    setDropdownAbierto(false);
+    return true;
+  }
+
+  /** Código leído con el escáner QR / código de barras o por lector USB. */
+  function handleScan(codigo) {
+    return aplicarProducto(findProductByScan(productos, codigo));
+  }
+
+  /**
+   * Enter en el buscador: los lectores USB envían el código seguido de Enter.
+   * Si coincide un producto (o solo hay un resultado) se selecciona.
+   */
+  function handleSearchKeyDown(e) {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    const producto =
+      findProductByScan(productos, searchTerm) ||
+      (productosFiltrados.length === 1 ? productosFiltrados[0] : null);
+    if (producto) aplicarProducto(producto);
   }
 
   const isEntrada = form.tipo === "entrada";
@@ -189,9 +231,17 @@ export default function MovementFormModal({ abierto, onCerrar }) {
                   }
                 }}
                 onFocus={() => setDropdownAbierto(true)}
-                className="input-field pl-9 w-full text-sm py-2.5"
+                onKeyDown={handleSearchKeyDown}
+                autoFocus
+                className="input-field pl-9 pr-12 w-full text-sm py-2.5"
               />
               <span className="material-symbols-outlined absolute left-3 top-3 text-slate-400 text-sm">search</span>
+              <ScanButton
+                onScan={handleScan}
+                title={t("scan.button")}
+                variant="inline"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 w-8"
+              />
             </div>
 
             {/* Menú predictivo flotante */}

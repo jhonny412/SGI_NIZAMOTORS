@@ -40,6 +40,7 @@ export default function Sidebar() {
 
     // Grupos que ya sabemos que existen o se generan de forma dinámica
     const groups = {};
+    const directItems = [];
 
     Object.values(ROUTES).forEach(route => {
       // Ignorar items raíz como dashboard y páginas hijas (con parent)
@@ -73,16 +74,28 @@ export default function Sidebar() {
             iconColor: route.iconColor,
             ...(children.length > 0 ? { children } : {})
           });
+        } else {
+          directItems.push({
+            type: "item",
+            id: route.id,
+            label: t(route.labelKey),
+            icon: route.icon,
+            iconColor: route.iconColor
+          });
         }
       }
     });
 
     // Mantener orden: Comercial -> Inventario -> Compras -> Reportes -> Seguridad
-    const order = ["comercial", "inventario", "compras", "reportes", "seguridad", "administracion"];
+    const order = ["comercial", "inventario", "compras", "reportes", "seguridad", "administracion", "configuracion"];
     order.forEach(gId => {
       if (groups[gId]) {
         list.push(groups[gId]);
       }
+    });
+    // Opciones de menú al mismo nivel que los grupos (ej. Configuración)
+    directItems.forEach(item => {
+      list.push(item);
     });
 
     return list;

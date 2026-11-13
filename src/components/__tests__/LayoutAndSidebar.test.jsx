@@ -103,5 +103,20 @@ describe('Layout and Sidebar Components', () => {
       </AuthContext.Provider>
     );
     expect(container.textContent).toContain('Niza Motors');
+
+    // Test Super Admin role: verifies Configuracion and Auditoria menu options
+    rerender(
+      <AuthContext.Provider value={{ usuarioActivo: { id: 2, nombre: 'Super Administrador', rol: 'SuperAdmin' } }}>
+        <UIContext.Provider value={{ ...mockUIContext, sidebarAbierto: true }}>
+          <InventoryContext.Provider value={mockInventoryContext}>
+            <Sidebar />
+          </InventoryContext.Provider>
+        </UIContext.Provider>
+      </AuthContext.Provider>
+    );
+    const superNavButtons = container.querySelectorAll('nav button');
+    superNavButtons.forEach((btn) => fireEvent.click(btn));
+    expect(container.textContent).toMatch(/Auditoría|Audit Log/);
+    expect(container.textContent).toMatch(/Configuración|Configuration/);
   });
 });
